@@ -130,21 +130,6 @@ services:
     volumes:
       - ./data-transfer:/data-transfer
     restart: unless-stopped
-  kafka-manager:
-    image: trivadis/kafka-manager:latest
-    container_name: kafka-manager
-    hostname: kafka-manager
-    labels:
-      com.mdps.service.webui.url: http://${PUBLIC_IP}:28038
-    depends_on:
-      - zookeeper-1
-      - kafka-1
-    ports:
-      - 28044:9000
-    environment:
-      ZK_HOSTS: zookeeper-1:2181
-      APPLICATION_SECRET: abc123!
-    restart: unless-stopped
   #  ================================== Kafkacat  ========================================== #
   kafkacat:
     image: edenhill/kafkacat:1.6.0

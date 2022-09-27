@@ -5,15 +5,27 @@ tasks:
       export PUBLIC_IP=127.0.0.1
       docker-compose up
 ports:
-  # Kafka Manager
-  - port: 28044
-    onOpen: open-preview
-    visibility: public
 
   # AKHQ
   - port: 28042
     onOpen: open-preview
     visibility: public
+
+  # Kafka Broker, Zookeeper 2188 
+  # 9993, 9994, 9992
+  - port: 28044
+    onOpen: open-preview
+    visibility: public
+  - port: 2188
+    onOpen: ignore
+  - port: 9092
+    onOpen: ignore
+  - port: 9093
+    onOpen: ignore
+  - port: 9094
+    onOpen: ignore
+  - port: 9994
+    onOpen: ignore
 
 vscode:
   extensions:

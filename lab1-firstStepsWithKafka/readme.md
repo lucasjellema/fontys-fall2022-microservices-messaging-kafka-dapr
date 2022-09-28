@@ -306,6 +306,8 @@ do
 done 
 ```
 
+![](images/pub-to-multi-partition-topic.png)  
+
 Check in a bash terminal where you are not in a container context if the partition assignment is clearly visible:
 
 ```
@@ -328,6 +330,8 @@ docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -G myTeam test-topic
 
 This runs a consumer that is in the consumer group call *myTeam*. Currently it is the only team member, so all messages are consumed by this consumer. You can derive this from the *rebalance* messages in the output.
 
+![](images/single-member-team.png)  
+
 In another terminal, execute the same command. This creates the second consumer in the group, the second team member to come and help out:
 
 ```
@@ -348,6 +352,8 @@ done
 ```
 20 messages are produced to the topic. They are distributed more or less evenly between the two partitions. And each partition is consumer by one of the consumers in the consumer group. Check the two consumer terminals - to find out if both got a share of the workload, if all messages were processed and if no messages were processed twice. Because the & was no longer included in the command - unlike before - the production of the messages was done sequentially. Each consumer should have processed all messages in the correct order. The two consumers worked independently of each other.
 
+![](images/parallel-consumption.png)  
+
 If we now add a third member to the team - or a third consumer to the consumer group - you might think that processing goes even faster. However, there is no partition for this additional consumer to process messages from. The only way to benefit from this consumer would be by introducing additional partitions in the topic.
 
 To verify this, open yet another bash terminal, execute the same command as before. This creates the third consumer in the group, the third team member to come and help out:
@@ -357,6 +363,8 @@ docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -G myTeam test-topic
 ``` 
 
 Group rebalancing takes place. You may find that the new consumer is assigned a partition, but then one of the earlier consumers no longer has a partition to consume from.
+
+![](images/three-men-team.png)  
 
 
 

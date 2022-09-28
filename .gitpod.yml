@@ -1,6 +1,7 @@
 tasks:
   - init: |
       docker-compose pull
+      # open the readme document for the first lab in VS code; note: thanks to the configuration in .vscode/settings.json, the document opens in markdown preview nide
       gp open lab1-firstStepsWithKafka/readme.md
   - command: |
       export PUBLIC_IP=127.0.0.1
@@ -11,6 +12,12 @@ ports:
   - port: 28042
     onOpen: open-preview
     visibility: public
+
+  # Node
+  - port: 3000
+    onOpen: ignore
+    visibility: public
+
 
   # Kafka Brokers, Zookeeper 
   - port: 2188

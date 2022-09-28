@@ -1,6 +1,6 @@
 const http = require('http')
 const url = require('url')
-const PORT = 3100
+const PORT = 3000
 
 // create an HTTP server that handles HTTP requests; it is handed two parameters: the request and response objects
 const server = http.createServer((req, res) => {

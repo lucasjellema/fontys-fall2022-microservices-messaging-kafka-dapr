@@ -1,10 +1,10 @@
 tasks:
   - init: |
       docker-compose pull
+      gp open lab1-firstStepsWithKafka/readme.md
   - command: |
       export PUBLIC_IP=127.0.0.1
       docker-compose up
-      gp open lab1-firstStepsWithKafka/readme.md
 ports:
 
   # AKHQ
@@ -24,6 +24,12 @@ ports:
   - port: 9093
     onOpen: ignore
   - port: 9094
+    onOpen: ignore
+  - port: 2181
+    onOpen: ignore
+  - port: 9992
+    onOpen: ignore
+  - port: 9993
     onOpen: ignore
   - port: 9994
     onOpen: ignore

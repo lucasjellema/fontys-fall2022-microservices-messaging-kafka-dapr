@@ -1,0 +1,7 @@
+{
+    "workbench.editorAssociations": 
+        {
+            "README.md": "vscode.markdown.preview.editor",
+            "lab1-firstStepsWithKafka/readme.md" : "vscode.markdown.preview.editor",
+        }
+}

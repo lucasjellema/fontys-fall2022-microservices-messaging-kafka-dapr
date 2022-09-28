@@ -133,6 +133,7 @@ services:
   #  ================================== Kafkacat  ========================================== #
   kafkacat:
     image: edenhill/kafkacat:1.6.0
+    # latest images is edenhill/kcat:1.7.1 - see https://github.com/edenhill/kcat
     container_name: kafkacat
     hostname: kafkacat
     volumes:

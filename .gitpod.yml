@@ -12,11 +12,7 @@ ports:
     onOpen: open-preview
     visibility: public
 
-  # Kafka Broker, Zookeeper 2188 
-  # 9993, 9994, 9992
-  - port: 28044
-    onOpen: open-preview
-    visibility: public
+  # Kafka Brokers, Zookeeper 
   - port: 2188
     onOpen: ignore
   - port: 9092

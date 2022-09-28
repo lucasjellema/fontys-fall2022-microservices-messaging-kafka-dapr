@@ -55,7 +55,7 @@ We can see that there are no topics yet, apart from an internal (__confluent) to
 
 ## Creating a topic in Kafka
 
-Now let's create a new topic. For that we again use the **kafka-topics** utility but this time with the `--create` option. We will create a test topic with 6 partitions and replicated 2 times. The `--if-not-exists` option is handy to avoid errors, in case a topic already exists. 
+Now let's create a new topic. For that we again use the **kafka-topics** utility but this time with the `--create` option. We will create a test topic with 1 partition and replicated 2 times. The `--if-not-exists` option is handy to avoid errors, in case a topic already exists. 
 
 ```
 kafka-topics --create --if-not-exists --zookeeper zookeeper-1:2181 --topic test-topic --partitions 1 --replication-factor 2
@@ -156,7 +156,7 @@ kafkacat -P -b kafka-3:19094 -t test-topic file.txt
 
 Check in the consumer terminal that the file arrived - as a single message.
 
-### Multiple "Parallel Producers"
+### Multiple "Parallel" Producers
 
 We have seen multiple producers produce messages to the same topic. They were not running at the same time, but they could have been. However, messages are committed to the topic in a specific order. Messages on the topic are saved and will be consumed in the exact order in which they were processed by the brokers. There is not an actual, explicit locking mechanism - but there is locking going on all the same: a message that is produced needs to be written to multiple files before the next message can be accepted for production onto the topic. Note that we can produce multiple messages in a batch to the topic - these are all saved at the same time, committed as a single transaction. 
 
@@ -179,8 +179,8 @@ We can get a little bit more information about the messages that are consumed fr
 kafkacat -C -b kafka-1:19092 -t test-topic -f '\n\nValue (%S bytes): %s\nTimestamp: %T\tOffset: %o\n--\n'
 ```
 
-The flags passed into to the *-f* option have the following meaning: %S is size in bytes, %s is the message body, %T is timestamp and %o is message offset. Other flags are %t for topic, %p for partition and %k for key. 
-### Multiple consumers 
+The flags passed into to the *-f* option have the following meaning: %S is size in bytes, %s is the message body, %T is timestamp and %o is message offset. Other flags are %t for topic, %p for partition, %h for message headers and %k for key. 
+### Multiple Concurrent Consumers 
 
 Multiple consumers can consume messages from the same topic. Consumers can come and go whenever they like. When they come, they can indicate where in the message stream they want to start consuming: at the very beginning (the default with `kafkcat -C`), at a specific offset or timestamp, right now (only new messages). Consumers can run in parallel and will not interfere with each other.
 
@@ -204,7 +204,8 @@ Now check if this new message was indeed received in both consumer terminals.
 
 You can stop the consumer with `CTRL+C` to return to the bash shell (and leaving the `kafkacat` container).
 
-Finally, let's see how a consumer can be started from a specific offset in the topic. The flag `-o` is used to specify the starting offset. It can have the values *beginning*, *end*, *<a specific number>*, *<negative number>*, *s@<timestamp*, *e@<timestamp>*. These indicate respectively:
+Finally, let's see how a consumer can be started from a specific offset in the topic. The flag `-o` is used to specify the starting offset. It can have the values *beginning*, *end*, *some specific number*, *negative number*, *s@timestamp*, *e@timestamp*. These indicate respectively:
+
 * consume all messages from the beginning
 * consume all messages starting right now (only new messages)
 * consume all messages starting from the specified offset
@@ -251,14 +252,93 @@ kafka-topics --delete  --zookeeper zookeeper-1:2181 --topic test-topic
 
 ## Partitions and Consumer Groups
 
-When we created topic *test-topic* earlier on we specified `-partitions 1`. We did not talk about partitions at that point, but now we will. Topics can - and usually will be - partitioned. Partitions are both a logical and a physical subdivision of the topic. Messages assigned to a different partitions are stored in different files. Each message belongs to exactly one partition. Having multiple partitions and multiple underlying files means that the parallel processing capacity in terms of message production to a topic is increased. Different messages can be written to different partitions at the same time in the same cluster. Additionally, having multiple partitions also allows us to run multiple collaborating consumers in groups (almost a team) for parallel processing the messages on a topic. Each consumer handles the messages in one or more partitions and each partition is associated with exactly one consumer in the (consumer) group. Note: we can still have multiple unrelated consumers or consumer groups running in parallel listening to the same topic, each processing all messages.
+When we created topic *test-topic* earlier on we specified `-partitions 1`. We did not talk about partitions at that point, but now we will. Topics can - and usually will be - partitioned. Partitions are both a logical and a physical subdivision of the topic. Messages assigned to a different partitions are stored in different logfiles. Each message belongs to exactly one partition. Having multiple partitions and multiple underlying files means that the parallel processing capacity in terms of message production to a topic is increased. Different messages can be written to different partitions at the same time in the same cluster. Additionally, having multiple partitions also allows us to run multiple collaborating consumers in groups (almost a team) for parallel processing the messages on a topic. Each consumer handles the messages in one or more partitions and each partition is associated with exactly one consumer in the (consumer) group. Note: we can still have multiple unrelated consumers or consumer groups running in parallel listening to the same topic, each processing all messages. Note that messages are ordered in order of production within the partition. There is no concept of ordering across partitions. Only by comparing timestamps for messages in different partitions can we more or less derive the respective order.
 
-Use the next command to recreate the *test-topic* , this time with two partitions - in the bash terminal window that `docker excec`-ed into the `kafka-1` container.
+### Topic with multiple partitions
+
+Use the next command to recreate the *test-topic* , this time with two partitions - in the bash terminal window that `docker exec`-ed into the `kafka-1` container.
 
 ```
 kafka-topics --create --if-not-exists --zookeeper zookeeper-1:2181 --topic test-topic --partitions 2 --replication-factor 2
 ```
 
+Inspect the topic using the command:
+
+```
+kafka-topics --describe --zookeeper zookeeper-1:2181 --topic test-topic
+```
+
+![](images/describe-partitioned-topic.png)  
+
+Two partitions for a topic mean that messages are distributed over these partitions and are saved in one of the two. The allocation of a message can be done in several ways:
+* explicitly specifying the partition when producing the message
+* let Kafka calculate the destination partition based on a partition key (some value in the message); all messages with the same partition key are guaranteed to end up in the same partition. Usually the number of key values is larger than the number of partitions and messages with different values for the partition key end up in the same partition
+* have Kafka choose the partition using a round-robin partition assignment. The messages will be written evenly across all partitions of a particular topic.
+
+### Produce messages to multi-partition topic
+
+If we now publish a few messages without specifying the partition or the key, these messages will be distributed across the partitions by Kafka.
+
+In the producer terminal - or a new terminal where you have executed `docker exec -it kafkacat sh` , run the following command - to have ten messages produced to the topic at roughly the same time: 
+
+```
+for i in 1 2 3 4 5 6 7 8 9 10 
+do
+   echo "This is message $i from producer A"| kafkacat -P -b kafka-2:19093 -t test-topic   &
+done 
+```
+
+Check in a bash terminal where you are not in a container context if the partition assignment is clearly visible:
+
+```
+docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -f '\n\nValue (%S bytes): %s\n\Partition: %p\tOffset: %o\n--\n'  -t test-topic -o -10
+```
+
+You will notice that roughly half of the messages went into one partition and the other half into the other.
+
+With these numbers, we do not experience the speed up that potentially happens when messages can be produced in parallel. With large volumes of messages, this can make a substantial difference.
+
+### Consumer Group for parallel and collaborative consumption and processing of messages
+
+Part of the value of partitions is the fact that they allow parallel consumption by consumers that work together - each performing the same task on a different set of messages. A consumer group is akin to a team of people that process for example all mail in the inbox. They have to coordinate their work to make sure that all messages are processed and that every message is processed only once. Consumer groups contain multiple consumers all processing messages from the same topic, but from different partitions. Every partition is assigned to one of the consumers in a consumer group. Consumers can have multiple partitions assigned. A partition can not be shared by multiple consumers in the same consumer group. Having more consumers in the group than partitons in the topic is therefore not useful.
+
+Execute in one bash terminal:
+
+```
+docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -G myTeam test-topic  
+```
+
+This runs a consumer that is in the consumer group call *myTeam*. Currently it is the only team member, so all messages are consumed by this consumer. You can derive this from the *rebalance* messages in the output.
+
+In another terminal, execute the same command. This creates the second consumer in the group, the second team member to come and help out:
+
+```
+docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -G myTeam test-topic  
+``` 
+
+We see some additional group rebalancing taking place - for both consumers. The team members organize the work amongst themselves - each taking responsibility for one of the partitions. 
+
+When we next produce a number of messages, we should see that these messages - distributed as they are over the partitions - are processed by one of the two consumers in the group. And not by both. And presumably the overall time required for the consumption and processing of these messages is substantially reduced (by close to 50%) by having the consumer group running.
+
+In the producer terminal, execute the following command:
+
+```
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+   echo "This is message $i from producer A"| kafkacat -P -b kafka-2:19093 -t test-topic   
+done 
+```
+20 messages are produced to the topic. They are distributed more or less evenly between the two partitions. And each partition is consumer by one of the consumers in the consumer group. Check the two consumer terminals - to find out if both got a share of the workload, if all messages were processed and if no messages were processed twice. Because the & was no longer included in the command - unlike before - the production of the messages was done sequentially. Each consumer should have processed all messages in the correct order. The two consumers worked independently of each other.
+
+If we now add a third member to the team - or a third consumer to the consumer group - you might think that processing goes even faster. However, there is no partition for this additional consumer to process messages from. The only way to benefit from this consumer would be by introducing additional partitions in the topic.
+
+To verify this, open yet another bash terminal, execute the same command as before. This creates the third consumer in the group, the third team member to come and help out:
+
+```
+docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -G myTeam test-topic  
+``` 
+
+Group rebalancing takes place. You may find that the new consumer is assigned a partition, but then one of the earlier consumers no longer has a partition to consume from.
 
 
 
@@ -273,32 +353,36 @@ You can inspect the details for each node - through the looking glass icon or ju
 
 The Topics page shows the topics currently created on the entire Kafka Cluster. You will see the *test-topic* that you have just created through the Kafka Console utility. If you show all topics, you will also see one or more internal topics, used by Kafka for housekeeping. The *__consumer_offsets* topic keeps track of the *read offset* for all consumers (or rather: for all consumer groups).
 
-![AKQH Node Details](./images/akhq-topics-1.png) 
+![AKQH Topics](images/topics-in-akhq.png) 
 
 You can see the number of messages on the *test-topic* as well as the number of partitions and the replication factor. You can downdrill on the topic, to level of the actual messages in the message log:
-![AKQH Node Details](./images/akhq-topics-2.png)
-You should see the messages that you have just been producing through the Kafka Console. You can see the message's production time and offset, their size, key and contents and the partition to which they have been assigned. You cannot change any of these properties - the message log is immutable.
+
+![](images/akhq-topics.png)  
+You should see the messages that you have just been producing through the Kafka Console. You can see the messages' production time and offset, their size, key and contents and the partition to which they have been assigned. You cannot change any of these properties - the message log is immutable.
 
 Other tabs in AKHQ for the topic provide access to the partitions (and their current offset), Consumer Groups consuming from the topic, the configuration, ACLs (Access Control Lists) and the message logs themselves. 
 
+The consumer group composition and the partition allocation can easily be checked as well. 
+
+![](images/cg-partition-allocation.png)  
+
 ### Produce a message in AK HQ
 Click on the button *Produce to Topic*. A window opens where you can define the message to produce. You only need to enter a message text. Then press Produce.
-![AKQH Node Details](./images/akhq-produce-1.png)
+
+![](images/produce-to-testtopic.png)  
 
 You will see an indication that the message has been produced to the topic. 
-![AKQH Node Details](./images/akhq-produce-2.png)
 
+![](images/produced-message-on-topic.png)  
 Now check in the bash terminal where the Kafka Consumer is running. You will see your own message, produced from the AKHQ application to the *test-topic*. Note: this Kafka Console Consumer session has been associated with an auto-generated Consumer Group (console-consumer-<generated number>). When you stop and start the console consumer, you will continue to consume from the previous offset reached in the console - unless you specify the *from-beginning* switch. 
 
 The message is also visible in AKHQ if you inspect the details for the *test-topic*. Note: the message may not have the highest offset of them all. The offset is defined per partition - so the offset value for your message depends on the previous offset in the specific partition selected by the Kafka Cluster for the message.
-![AKQH Node Details](./images/akhq-produce-3.png)
 
 When you produce a message in the Kafka Console, that message will of course show up in the GUI of AKHQ as well.
 
 
 # Resources
 A nice introductory article on Apache Kafka: [Part 1: Apache Kafka for beginners - What is Apache Kafka?](https://www.cloudkarafka.com/blog/2016-11-30-part1-kafka-for-beginners-what-is-apache-kafka.html)
-
 
 Kafkacat - introduction to the command line utility: [Learn how to use Kafkacat – the most versatile Kafka CLI client](https://codingharbour.com/apache-kafka/learn-how-to-use-kafkacat-the-most-versatile-cli-client/)
 

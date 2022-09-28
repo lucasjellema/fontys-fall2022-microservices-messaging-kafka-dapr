@@ -4,10 +4,7 @@ tasks:
   - command: |
       export PUBLIC_IP=127.0.0.1
       docker-compose up
-  - name: Open readme
-    command: gp await port 23000 1>/dev/null && gp open README.md
-  - name: Open readme
-    command: gp await port 23000 1>/dev/null && gp open lab1-firstStepsWithKafka/readme.md
+      gp open lab1-firstStepsWithKafka/readme.md
 ports:
 
   # AKHQ

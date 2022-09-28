@@ -1,5 +1,23 @@
 # Getting started with Apache Kafka
 
+- [Getting started with Apache Kafka](#getting-started-with-apache-kafka)
+  - [Inspect the environment](#inspect-the-environment)
+  - [Connect to a Kafka Broker](#connect-to-a-kafka-broker)
+  - [List topics in Kafka](#list-topics-in-kafka)
+  - [Creating a topic in Kafka](#creating-a-topic-in-kafka)
+    - [Describe a Topic](#describe-a-topic)
+  - [Produce and Consume to Kafka topic with command line utility Kafkacat (aka kcat)](#produce-and-consume-to-kafka-topic-with-command-line-utility-kafkacat-aka-kcat)
+    - [Multiple "Parallel" Producers](#multiple-parallel-producers)
+    - [Multiple Concurrent Consumers](#multiple-concurrent-consumers)
+    - [Delete the test-topic](#delete-the-test-topic)
+  - [Partitions and Consumer Groups](#partitions-and-consumer-groups)
+    - [Topic with multiple partitions](#topic-with-multiple-partitions)
+    - [Produce messages to multi-partition topic](#produce-messages-to-multi-partition-topic)
+    - [Consumer Group for parallel and collaborative consumption and processing of messages](#consumer-group-for-parallel-and-collaborative-consumption-and-processing-of-messages)
+  - [Using Apache Kafka HQ](#using-apache-kafka-hq)
+    - [Produce a message in AK HQ](#produce-a-message-in-ak-hq)
+- [Resources](#resources)
+
 In this lab, you will have your first look and feel around Apache Kafka, using a Gitpod workspace. You can start this workspace using the URL: [https://gitpod.io/#https://github.com/lucasjellema/fontys-fall2022-microservices-messaging-kafka-dapr](https://gitpod.io/#https://github.com/lucasjellema/fontys-fall2022-microservices-messaging-kafka-dapr). Note: you will need a (free) Gitpod account in order to run the workspace. You can easily create such an account using a GitHub or GitLab account. Go to [gitpod.io/workspaces/](https://gitpod.io/workspaces/) and Log In with either GitHub or GitLab account. After doing that, you will be able to run the workspace.
 
 The first thing you will see in terms of the Gitpod workspace is likely the VS Code IDE that launches in the browser. It will show you the source code from the GitHub repository. It probably also shows a terminal window in which docker-compose is running - starting up containers.

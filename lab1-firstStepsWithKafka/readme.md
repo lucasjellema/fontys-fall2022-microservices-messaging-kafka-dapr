@@ -26,6 +26,10 @@ to list all running containers. The output should look as is shown below: five c
 
 ![](images/docker-ps.png)  
 
+Visualized the environment set up is like this:
+
+![](images/container-setup.png)  
+
 ## Connect to a Kafka Broker 
 The environment contains a Kafka cluster with three brokers, all running on a single, non-distributed Docker host. To work with Kafka in this environment, you can:
 * use the AK HQ web console
@@ -53,6 +57,8 @@ kafka-topics --list --zookeeper zookeeper-1:2181
 
 We can see that there are no topics yet, apart from an internal (__confluent) topic.  
 
+![](images/list-topics.png)  
+
 ## Creating a topic in Kafka
 
 Now let's create a new topic. For that we again use the **kafka-topics** utility but this time with the `--create` option. We will create a test topic with 1 partition and replicated 2 times. The `--if-not-exists` option is handy to avoid errors, in case a topic already exists. 
@@ -75,6 +81,10 @@ You can use the `--describe` option to get details on a specific topic, such as 
 kafka-topics --describe --zookeeper zookeeper-1:2181 --topic test-topic
 ```
 
+The test-topic is a shared object throughout the cluster. The contents of the topic is replicated across two brokers.
+
+![](images/test-tiopic.png)  
+
 ## Produce and Consume to Kafka topic with command line utility Kafkacat (aka kcat)
 
 Now let's see the topic in use. The most basic way to test it is through the command line. Kafka comes with two handy utilities `kafka-console-consumer` and `kafka-console-producer` to consume and produce messages through the command line; these utilities run on the any Kafka broker, including the one you are currently connected to. You can publish your first message to a Kafka Topic for example with this command:
@@ -83,7 +93,7 @@ Now let's see the topic in use. The most basic way to test it is through the com
 echo "This is my first message!" | kafka-console-producer --broker-list kafka-1:19092,kafka-2:19093 --topic test-topic
 ```
 
-There is also an even more convenient command line tool - *kcat* previously known as *kafkacat* - that runs in a different container. 
+There is also an even more convenient command line tool - *kafkacat* also known as *kcat* - that runs in a different container. 
 
 Click on the plus sign on the right side of the screen to launch a new terminal; select `bash` as the terminal type. 
 
@@ -107,6 +117,8 @@ Next, to consume all messages from the `test-topic`, execute this next command:
 kafkacat -C -b kafka-1:19092 -t test-topic
 ```
 
+![](images/kafkacat-kafka1-testtopic.png)  
+
 This will list the message "This is my first message!" that was published to the topic earlier on. Then the output will read *Reached end of topic test-topic [0] at offset 1*. Offset is an important concept in Kafka: it is the pointer into a topic's message queue. The current consumer is consuming from offset 1 onwards - and currently there no more messages from this offset and beyond. New consumers can be started - configured with their own specific offset to start consuming from. These consumers can start consuming from offset 0 or at least the lowest offset still available, or from the current offset to only consume messages produced after they started running. Or a consumer can be configured for an offset or even a timestamp anywhere in between.
 
 Note that `kafkacat` keeps on listening to the topic for more messages to appear. You can quit this *session* at any time with `CTRL+C`. However, keep the consumer running for now - to see additonal messages coming in.
@@ -125,6 +137,8 @@ As before, you can now execute  `kafkacat` commands - to inspect, produce to and
 ```
 kafkacat -P -b kafka-1:19092 -t test-topic
 ```
+
+![](images/kafkacat-consume-and-produce.png)  
 
 You are now in a production session: every line of text you type is produced as a message when you press enter. Type a few lines of text.  Check in the previous terminal - to see that the messages you typed were indeed consumed. And arrived in the order in which you typed them. Return to the terminal where you were producing messages. Use `CTRL+Z` to end the `kafkacat -P session`.
 
@@ -171,6 +185,8 @@ done
 
 By ending the command in the loop with an & character, we run each command in the background and all loop iterations therefore in parallel. This will mean that the messages will most likely arrive a little out of (loop) order. 
 
+![](images/parallel-producers.png)  
+
 Check in the consumer window if all messages arrived - and in which order.
 
 We can get a little bit more information about the messages that are consumed from the topic. Stop the consumer - using `CTRL+C`. Now run this command to get the messages from the topic - this time with extended details:
@@ -191,6 +207,8 @@ In the new bash terminal, execute this command
 ```
 docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -f '\n\nValue (%S bytes): %s\n\Partition: %p\tOffset: %o\n--\n'  -t test-topic
 ```
+
+![](images/multiple-producers-multiple-consumers.png)  
 
 This lists all messages on the test-topic, in the order of course in which they were produced. 
 

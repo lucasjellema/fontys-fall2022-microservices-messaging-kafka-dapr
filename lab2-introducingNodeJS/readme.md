@@ -14,7 +14,7 @@ This lab is only a very brief introduction of NodeJS and how to get started with
 
 ## Environment
 
-The Gitpod workspace comes preinstalled with the Node runtime. You can check which version is currently available by running the following command:
+The Gitpod workspace comes preinstalled with the Node runtime. You can check which version is currently available by running the following command inn a new bash terminal:
 
 `node -v`
 
@@ -26,7 +26,7 @@ Also run:
 
 on the commandline to verify whether *npm* is installed successully. This should return the version label for the installed version of *npm*. NPM is the Node Package Manager - the component that takes care of downloading and installing packages that provide modules with reusable functionality. Check the website [npmjs.com](https://www.npmjs.com/) to explore the wealth of the more than 1 Million packages available on NPM.
 
-The resources for this part of the hands on workshop are available in VS Code in the directory *lab2-introducingNodeJS*
+The resources for this part of the hands on workshop are available in VS Code in the directory *lab2-introducingNodeJS*. All folders and files the instructions below ask you to create are already available in the directory *lab2-introducingNodeJS/solutions*. Instead of creating all files as per the instructions, you can also use these prepared files to see the effect.
 
 
 ## Gentle introduction to Node applications
@@ -37,7 +37,7 @@ Note: for a more thorough yet quite accessible introduction to Node you may want
     
 ### HelloWorld in Node
 
-On the machine and environment with the Node runtime, create a folder called *hello-world*. In this folder, create a file called *app.js*. Edit this file and add the following line of code:
+Create a folder called *hello-world* under folder *lab2-introducingNodeJS*. In this folder, create a file called *app.js*. Edit this file and add the following line of code:
 ```
 console.log("Hello World!")
 ```
@@ -50,7 +50,7 @@ This will run the Node runtime, load file app.js and interpret and execute its c
 
 You can define and call functions in Node. Additionally, you can store references to functions in variables and even pass these references in calls to other functions. You can instruct a function to call another function. 
 
-All subsequent steps are already implemented in the file *hello-world-functions/app.js*. Either follow along using that file or create your own new file.
+All subsequent steps are already implemented in the file *hello-world-functions/solutions/app.js*. Either follow along using that file or create your own new file.
 
 Let's first define a function
 ```
@@ -116,7 +116,7 @@ execute(pf1) // the closure is a function reference that our function execute ca
 
 ### HelloWorld with NPM
 
-On the machine and environment with the Node runtime, create a folder called *my-world-npm*. Navigate to this folder and run `npm init` to create a new application. Folder *hello-world-npm* contains the sample.
+On the machine and environment with the Node runtime, create a folder called *my-world-npm*. Navigate to this folder and run `npm init` to create a new application. Folder *solutions/hello-world-npm* contains the sample.
 
 ```
 cd my-world-npm
@@ -135,7 +135,7 @@ to this file. Now type `npm start` at the command line and press enter. We now l
 ### Asynchronous in Node
 JavaScript is single threaded – no parallel threads can be started from your code. However: multiple actions can be in progress at the same time. Any action in Node that requires network or file system interaction is typically performed asynchronously: the command is started and handed to the Node background processes (that run parallel to the single foreground thread); the main thread continues with other work and when the background processes have completed the task, the results are returned to the invoker (when the main thread has an opening to attend to it).
 
-The code discussed in this section can be found in file *hello-world-async/app.js*. Feel free to peruse that file or create your own.
+The code discussed in this section can be found in file *solutions/hello-world-async/app.js*. Feel free to peruse that file or create your own.
 
 The function *later* will print a message on the console output, but only do so after a specified period of time (in miliseconds) has passed:
 
@@ -239,7 +239,7 @@ Here, three concurrent Promises are retrieved and we wait for all of them to pro
 ### Handle HTTP Request with Node
 We will make a Node application now that is a little bit more interesting than what we did before. This application will be capable of handling an HTTP request that passes in a query parameter; it will read the parameter and return an appropriate and friendly message.
 
-On the machine and environment with the Node runtime, create a folder called *my-world-web*. Navigate to this folder and run `npm init` to create a new application.  Folder *hello-world-web* contains the sample.
+On the machine and environment with the Node runtime, create a folder called *my-world-web*. Navigate to this folder and run `npm init` to create a new application.  Folder *solutions/hello-world-web* contains the sample.
 
 ```
 cd my-world-web
@@ -273,11 +273,27 @@ Save the file.
 
 On the command line, type `npm start` to execute the application. The HTTP Server is now listening for HTTP Requests at `localhost`, on *port 3000*.
 
-From the command line using *curl* or *wget* or from your browser send an HTTP Request: [http://localhost:3000?name=John+Doe](http://localhost:3000?name=John+Doe)
+From a new bash terminal window *curl* or *wget* send an HTTP Request: [http://localhost:3000?name=John+Doe](http://localhost:3000?name=John+Doe)
 
 ```
 curl http://localhost:3000?name=John+Doe 
 ```
+
+Alternatively, Gitpod can help you with this by providing the external URL for accessing the Node application on port 3000 through curl:
+
+```
+curl  $(gp url 3100)?name=John+Williamson
+```
+
+or through the browser:
+
+```
+gp preview  $(gp url 3100)?name=John+Williamson
+```
+
+This should open a browser window and send a GET request to the Node application. The URL used for making that request is a public URL and could be used by anyone on any device.
+
+
 You should receive an appropriate response from the service. Feel free to make some additional calls - and of course to modify the code to get some more interesting results. 
 ```
 curl http://localhost:3000?name=Janet+Doe 

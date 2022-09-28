@@ -55,7 +55,7 @@ First, let's list the topics available on your Kafka Cluster. For that we use th
 kafka-topics --list --zookeeper zookeeper-1:2181
 ```
 
-We can see that there are no topics yet, apart from an internal (__confluent) topic.  
+We can see that there are no topics yet.  
 
 ![](images/list-topics.png)  
 
@@ -140,7 +140,7 @@ kafkacat -P -b kafka-1:19092 -t test-topic
 
 ![](images/kafkacat-consume-and-produce.png)  
 
-You are now in a production session: every line of text you type is produced as a message when you press enter. Type a few lines of text.  Check in the previous terminal - to see that the messages you typed were indeed consumed. And arrived in the order in which you typed them. Return to the terminal where you were producing messages. Use `CTRL+Z` to end the `kafkacat -P session`.
+You are now in a production session: every line of text you type is produced as a message when you press enter. Type a few lines of text.  Check in the previous terminal - to see that the messages you typed were indeed consumed. And arrived in the order in which you typed them. Return to the terminal where you were producing messages. Use `CTRL+Z` to suspend the `kafkacat -P session`.
 
 Enter this command to use `cat` to create a file with a few lines of text. Each line will be turned into a message produced to the Kafka Topic.
 
@@ -148,7 +148,7 @@ Enter this command to use `cat` to create a file with a few lines of text. Each 
 cat > file.txt
 ```
 
-Enter some text, type enter, type some more text and press enter again. Perhaps one or two additional lines. Then `CTRL+Z` to quite the editing session.
+Enter some text, type enter, type some more text and press enter again. Perhaps one or two additional lines. Then `CTRL+Z` to suspend the editing session.
 
 Use `cat file.txt` to inspect the contents of the file you have created.
 
@@ -267,6 +267,7 @@ In the bash terminal window you opened into the `kafka-1` container, delete the 
 kafka-topics --delete  --zookeeper zookeeper-1:2181 --topic test-topic 
 ```
 
+You can check if the consumers have noticed that the topic no longer exists. They should have - as they frequently try to contact the brokers regarding the topic and should be informed that the topic is no longer available.
 
 ## Partitions and Consumer Groups
 
@@ -362,7 +363,8 @@ To verify this, open yet another bash terminal, execute the same command as befo
 docker exec -ti  kafkacat  kafkacat  -b kafka-1:19092 -C -G myTeam test-topic  
 ``` 
 
-Group rebalancing takes place. You may find that the new consumer is assigned a partition, but then one of the earlier consumers no longer has a partition to consume from.
+Group rebalancing takes place. You may find that the new consumer is assigned a partition, but then one of the earlier consumers no longer has a partition to consume from. Between the three consumers, one is without partition assignment. This shows up in the output as `% Group myTeam rebalanced (memberid ...): assigned:`; in other words: assigned to: 'empty', no partition assignment).
+
 
 ![](images/three-men-team.png)  
 

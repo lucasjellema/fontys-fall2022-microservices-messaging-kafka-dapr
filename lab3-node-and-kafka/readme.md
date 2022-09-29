@@ -36,7 +36,7 @@ This is as good a time as any to open file *produce.js* again and interpret what
 * instantiate the KafkaJS client by pointing it towards the brokers in the Kafka clusters; the IP addresses are configured in the docker-compose.yml file
 * create a producer through the KafkaJS client
 * connect the producer
-* produce the message to a specific topic (in this case without specifying a partition)
+* produce the array of messages to a specific topic (in this case the array contains a single message that does not specify a partition, a timestamp or headers) See [Kafkajs Docs on Producing](https://kafka.js.org/docs/producing) for more details
 * disconnect the producer
 
 When `npm install` is done installing - which really should not take long with kafkajs -  it is time to produce some messages to the topic.  
@@ -58,11 +58,12 @@ Check the contents of the file *consumer.js*. It is quite similar to *producer.j
 
 What goes on in the *consumer.js* application?
 
-* compose configuration (consists primarily of the Kafka Broker endpoints as well as the Configuration Group Id)
-* create a StreamReader (based on the configuration, with the offset to the earliest message available on the topic and with subscription(s) on the topic(s) defined in config.js )
-* prepare the StreamReader (with event handlers to respond to data events on the Stream that are emitted when a message is read from the Kafka Topic)
-* define event handler for the disconnected event
-* disconnect the consumer after 30 seconds (30000 ms)
+* instantiate the KafkaJS client by pointing it towards the brokers in the Kafka clusters; the IP addresses are configured in the docker-compose.yml file
+* create a consumer through the KafkaJS client, as a member of consumer group *test-group*
+* connect the consumer
+* subscribe the consumer to a specific topic, indicating that all messages (`fromBeginning:true`) are requested. When fromBeginning is true, the group will use the earliest offset. If set to false, it will use the latest offset. The default is false.
+* define the function that should be invoked for each messages received, using `consumer.run( eachMessage: <function>)` ; in that function, write message details to the console.
+
 
 Run the Kafka Consumer application:
 ```
@@ -75,7 +76,8 @@ This should print all messages on the *test-topic* to the console. You should se
 {"level":"INFO","timestamp":"2022-09-29T04:41:39.903Z","logger":"kafkajs","message":"[ConsumerGroup] Consumer has joined the group","groupId":"test-group","memberId":"my-app-fdaed509-2252-4513-8563-377960170ced","leaderId":"my-app-fdaed509-2252-4513-8563-377960170ced","isLeader":true,"memberAssignment":{"test-topic":[0,1]},"groupProtocol":"RoundRobinAssigner","duration":129}
 { value: 'Here I am telling you a story' }
 ```
-You can stop the application with `CTRL+C`.
+
+You can stop the application with <kbd>Ctrl</kbd> + <kbd>C</kbd>.
 
 If you run the consumer application a second time, you will probably not see any messages - or only new ones. This is the effect of using a Consumer Group Id. The Kafka Cluster retains the Consumer Group Id and its corresponding offset. In the second run, the consuming applications joins the same Consumer Group as before. This group has already consumed all messages. If you now change the Consumer Group Id and run the Node application again, you will see all messages on the topic once more. This is because for this new Consumer Group, no messages at all have been read from the topic, and Kafka will offer up all messages from the beginning of time.
 

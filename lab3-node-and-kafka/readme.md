@@ -1,6 +1,14 @@
 # Lab - Programmatic interaction with Apache Kafka from Node
 
-TABLE OF CONTENTS
+- [Lab - Programmatic interaction with Apache Kafka from Node](#lab---programmatic-interaction-with-apache-kafka-from-node)
+  - [Node interacting with Apache Kafka](#node-interacting-with-apache-kafka)
+    - [Producing to test-topic in Node](#producing-to-test-topic-in-node)
+    - [Consuming from test-topic in Node](#consuming-from-test-topic-in-node)
+    - [Check in Apache Kafka HQ](#check-in-apache-kafka-hq)
+  - [Multi-message producer and Parallel Consumer Teams](#multi-message-producer-and-parallel-consumer-teams)
+  - [Bonus: Node Web Application](#bonus-node-web-application)
+    - [Node Web Application for Producing Messages](#node-web-application-for-producing-messages)
+    - [Node Web Application for Consuming Messages](#node-web-application-for-consuming-messages)
 
 In the pfirstrevious lab, you have produced and consumed messages manually, using Kafkacat and the Apache Kafka HQ GUI. In this lab, you will also produce and consume messages - this time in a programmatic way. You will use the Apache Kafka platform that you used in lab1 as well as the Node run time environment that you worked with in lab2. You will interact with Kafka from Node in the pure form with one of the most popular libraries for using Kafka from Node applications. 
 
@@ -89,11 +97,36 @@ Open the Consumer Groups page. You will see the consumer group details. If you r
 On the Topic page, you can produce a message to the *test-topic*. This message will of course be consumed by the *consumer.js* application.
 
 
+## Multi-message producer and Parallel Consumer Teams
+
+This lab deals with a Node application that runs a number a asynchronous, parallel, background processes. One process produces messages. Three other processes are each message consumers. Two consumers work on the same team (in a Kafka consumer group) and the third consumer is on their own. 
+
+Check out the file `multi-producer-parallel-consumer.js` in directory *lab3-node-and-kafka\node-multi-kafka-producer-consumer*. The code should not be too hard to comprehend. 
+
+Function `produceMessages` is an asynchronous function that runs a loop of the specified number of itereations and in each iteration produces a message to `test-topic`. Before continuing with the next iteration, the process pauses for a number of miliseconds - as specified by the constant *productionInterval*. The function is invoked when this application is executed.
+
+Function `consumeMessages` is obviously a consumer of messages from `test-topic`. Only new messages. The name of a consumer group is passed in the call to the function. The application assigns two consumers to the *blueTeam* and one to the *redTeam*. Processing a message is not complicated: write message details to the console - then sit back and relax and take a break for *consumptionInterval* miliseconds.
+
+The blueTeam with two members can obviously outperform the redTeam with just a single consumer. In this case, because the time it takes to process a message is longer than the (production) interval between messages, a single consumer will not be able to keep up and will start falling behind the message producer. A team with two members should be able to keep up - as long as the processing interval is not longer than twice the production interval.
+
+To run this application, execute these steps:
+
+```
+cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab3-node-and-kafka/node-multi-kafka-producer-consumer
+npm install 
+node multi-producer-parallel-consumer.js
+```
+
+You will see how the messages are produced - about three every two seconds - and how the blueTeam is able to keep up and how the redTeam is falling behind. 
+
+You can stop the application with <kbd>Ctrl</kbd> + <kbd>C</kbd>.
+
+You can start playing around a little: change the (ratio between the) productionratio interval and the consumption interval. Introduce a third team with one or more consumers. Change the number of consumers in the existing teams. Check on AK HQ what you have wrought.  
 
 ## Bonus: Node Web Application
-From the previous step it is but a small additional step to allow users to enter messages into a Web User Interface and send them for publication to a Kafka Topic. The first section shows such a (very simple) web application in Node, that allows you to send messages as query parameter in an HTTP GET request, for example by entering a URL in the location bar of your browser. 
+With Node, it is fairly easy to publish a web application that allows users to enter messages into a Web User Interface and send them for publication to a Kafka Topic. Or even simpler: to send messages as query parameter in an HTTP GET request, for example by entering a URL in the location bar of your browser or sending a CURL request. 
 
-The next section does something similar on the consuming end: publish a web application that makes the messages visible that have been consumed from the Kafka topic. To set the expectations at the right level: the response to an HTTP Request will be a JSON document with all messages received by the consumer. A more fancy UI is left as an exercise to the reader ;)
+We can also do something similar on the consuming end: publish a web application that makes the messages visible that have been consumed from the Kafka topic. To set the expectations at the right level: the response to an HTTP Request will be a JSON document with all messages received by the consumer. A more fancy UI is left as an exercise to the reader ;)
  
 ### Node Web Application for Producing Messages
 Earlier in this lab we looked at a very simple Node web application: *hello-world-web*. Now we combine that web application with the Kafka Producer we worked on just before. Look in directory node-kafka-web-client and open file *web-producer.js*.
@@ -107,12 +140,32 @@ npm install
 to download all required NPM modules into the directory node-modules.
 
 Now you can run the web application:
+
 ```
+echo "The external URL for accessing this workspace on port 3001" $(gp url 3001) 
 node web-producer.js
 ```
+
 The HTTP server is started and listens on port 3001. You can send GET requests to this port that have a query parameter called *message*. Whatever value *message* has is used as the content of a message published to the Kafka Topic *test-topic*.
 
-From a browser - or from the command line using tools such as *curl* or *wget* - make a GET request such as this one: [http://localhost:3001?message=My+Message+is+Hello+World](http://localhost:3001?message=My+Message+is+Hello+World).
+From the command line using tools such as *curl* or *wget* you can make requests that in turn will cause a message to be published to a Kafka topic:
+
+```
+wget localhost:3001?message=My+Message+is+Hello+World.
+```
+
+Alternatively, Gitpod can help you with this by providing the external URL for accessing the Node application on port 3001 through curl from anywhere in the world:
+
+```
+curl  $(gp url 3001)?message=A+Beautiful+Message
+```
+
+or through any browser:
+
+```
+gp preview  $(gp url 3001)?message=A+Beautiful+Message
+```
+
 
 You can check in Apache Kafka HQ or in the Kafka Console Consumer if the message arrives. Or go to the next section for the consuming web application in Node.
 

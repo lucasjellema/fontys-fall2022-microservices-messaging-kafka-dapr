@@ -19,6 +19,12 @@ ports:
   - port: 3000
     onOpen: ignore
     visibility: public
+  - port: 3001
+    onOpen: ignore
+    visibility: public
+  - port: 3002
+    onOpen: ignore
+    visibility: public
 
 
   # Kafka Brokers, Zookeeper 

@@ -282,13 +282,13 @@ curl http://localhost:3000?name=John+Doe
 Alternatively, Gitpod can help you with this by providing the external URL for accessing the Node application on port 3000 through curl:
 
 ```
-curl  $(gp url 3100)?name=John+Williamson
+curl  $(gp url 3000)?name=John+Williamson
 ```
 
 or through the browser:
 
 ```
-gp preview  $(gp url 3100)?name=John+Williamson
+gp preview  $(gp url 3000)?name=John+Williamson
 ```
 
 This should open a browser window and send a GET request to the Node application. The URL used for making that request is a public URL and could be used by anyone on any device.

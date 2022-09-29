@@ -139,7 +139,7 @@ kafkacat -C -b kafka-1:19092 -t test-topic
 
 This will list the message "This is my first message!" that was published to the topic earlier on. Then the output will read *Reached end of topic test-topic [0] at offset 1*. Offset is an important concept in Kafka: it is the pointer into a topic's message queue. The current consumer is consuming from offset 1 onwards - and currently there no more messages from this offset and beyond. New consumers can be started - configured with their own specific offset to start consuming from. These consumers can start consuming from offset 0 or at least the lowest offset still available, or from the current offset to only consume messages produced after they started running. Or a consumer can be configured for an offset or even a timestamp anywhere in between.
 
-Note that `kafkacat` keeps on listening to the topic for more messages to appear. You can quit this *session* at any time with `CTRL+C`. However, keep the consumer running for now - to see additonal messages coming in.
+Note that `kafkacat` keeps on listening to the topic for more messages to appear. You can quit this *session* at any time with <kbd>Ctrl</kbd> + <kbd>C</kbd>. However, keep the consumer running for now - to see additonal messages coming in.
 
 
 Click on the plus sign on the right side of the screen to launch another new terminal that we will use for publishing messages to the topic; select `bash` as the terminal type. 
@@ -158,7 +158,7 @@ kafkacat -P -b kafka-1:19092 -t test-topic
 
 ![](images/kafkacat-consume-and-produce.png)  
 
-You are now in a production session: every line of text you type is produced as a message when you press enter. Type a few lines of text.  Check in the previous terminal - to see that the messages you typed were indeed consumed. And arrived in the order in which you typed them. Return to the terminal where you were producing messages. Use `CTRL+Z` to suspend the `kafkacat -P session`.
+You are now in a production session: every line of text you type is produced as a message when you press enter. Type a few lines of text.  Check in the previous terminal - to see that the messages you typed were indeed consumed. And arrived in the order in which you typed them. Return to the terminal where you were producing messages. Use <kbd>Ctrl</kbd> + <kbd>Z</kbd> to suspend the `kafkacat -P session`.
 
 Enter this command to use `cat` to create a file with a few lines of text. Each line will be turned into a message produced to the Kafka Topic.
 
@@ -166,7 +166,7 @@ Enter this command to use `cat` to create a file with a few lines of text. Each 
 cat > file.txt
 ```
 
-Enter some text, type enter, type some more text and press enter again. Perhaps one or two additional lines. Then `CTRL+Z` to suspend the editing session.
+Enter some text, type enter, type some more text and press enter again. Perhaps one or two additional lines. Then <kbd>Ctrl</kbd> + <kbd>Z</kbd> to suspend the editing session.
 
 Use `cat file.txt` to inspect the contents of the file you have created.
 
@@ -207,7 +207,7 @@ By ending the command in the loop with an & character, we run each command in th
 
 Check in the consumer window if all messages arrived - and in which order.
 
-We can get a little bit more information about the messages that are consumed from the topic. Stop the consumer - using `CTRL+C`. Now run this command to get the messages from the topic - this time with extended details:
+We can get a little bit more information about the messages that are consumed from the topic. Stop the consumer - using <kbd>Ctrl</kbd> + <kbd>C</kbd>. Now run this command to get the messages from the topic - this time with extended details:
 
 ```
 kafkacat -C -b kafka-1:19092 -t test-topic -f '\n\nValue (%S bytes): %s\nTimestamp: %T\tOffset: %o\n--\n'
@@ -238,7 +238,7 @@ echo "New Message" | kafkacat -P -b kafka-1:19092 -t test-topic
 
 Now check if this new message was indeed received in both consumer terminals.
 
-You can stop the consumer with `CTRL+C` to return to the bash shell (and leaving the `kafkacat` container).
+You can stop the consumer with <kbd>Ctrl</kbd> + <kbd>C</kbd> to return to the bash shell (and leaving the `kafkacat` container).
 
 Finally, let's see how a consumer can be started from a specific offset in the topic. The flag `-o` is used to specify the starting offset. It can have the values *beginning*, *end*, *some specific number*, *negative number*, *s@timestamp*, *e@timestamp*. These indicate respectively:
 

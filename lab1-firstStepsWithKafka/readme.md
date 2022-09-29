@@ -40,13 +40,13 @@ Type
 
 `docker ps`
 
-to list all running containers. The output should look as is shown below: five containers running in the workspace. 
+to list all running containers. The output should look as is shown below: six containers running in the workspace. 
 
 ![](images/docker-ps.png)  
 
 Visualized the environment set up is like this:
 
-![](images/container-setup.png)  
+![](images/six-containers.png)  
 
 ## Connect to a Kafka Broker 
 The environment contains a Kafka cluster with three brokers, all running on a single, non-distributed Docker host. To work with Kafka in this environment, you can:

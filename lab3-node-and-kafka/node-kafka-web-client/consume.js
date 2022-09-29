@@ -1,45 +1,37 @@
-const Kafka = require("node-rdkafka"); // see: https://github.com/blizzard/node-rdkafka
-const externalConfig = require('./config').config;
+const { Kafka, logLevel } = require('kafkajs')
+
+const topic ="test-topic"
+
+const kafka = new Kafka({
+  clientId: 'my-app',
+  brokers: ['localhost:29092', 'localhost:29093', 'localhost:29094'],
+  logLevel: logLevel.INFO
+})
 
 const CONSUMER_GROUP_ID = "node-web-consumer"
 
-const kafkaConf = {
-    "group.id": CONSUMER_GROUP_ID,
-    "metadata.broker.list": externalConfig.KAFKA_BROKERS,
-    "socket.keepalive.enable": true,
-    "debug": "generic,broker,security"
-};
-
-const topics = [externalConfig.KAFKA_TOPIC];
-
-const stream = new Kafka.KafkaConsumer.createReadStream(kafkaConf, { "auto.offset.reset": "earliest" }, {
-    topics: topics
-});
-
+const consumeMessages = async () => {
+    const consumer = kafka.consumer({ groupId: CONSUMER_GROUP_ID })
+  
+    await consumer.connect()
+    await consumer.subscribe({ topic: topic, fromBeginning: true })
+  
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const prefix = `${topic}[${message.offset}] / ${message.timestamp}`
+        console.log(`Consumed message - ${prefix} ${message.key}#${message.value}`)
+        // add new messages at the top of the array
+        messages.unshift(message.value.toString())
+      },
+    })
+  }
+  
 let messages = []
 
-stream.on('data', function (message) {
-    console.log(`Consumed message on Stream: ${message.value.toString()}`);
-    // add new messages at the top of the array
-    messages.unshift(message.value.toString())
-    // the structure of the messages is as follows:
-    //   {
-    //     value: Buffer.from('hi'), // message contents as a Buffer
-    //     size: 2, // size of the message, in bytes
-    //     topic: 'librdtesting-01', // topic the message comes from
-    //     offset: 1337, // offset the message was read from
-    //     partition: 1, // partition the message was on
-    //     key: 'someKey', // key of the message if present
-    //     timestamp: 1510325354780 // timestamp of message creation
-    //   }
-});
+consumeMessages()
 
-console.log(`Stream consumer created to consume from topic ${topics}`);
+console.log(`Consumer created to consume messages from topic ${topic}`);
 
-stream.consumer.on("disconnected", function (arg) {
-    console.log(`The stream consumer has been disconnected`)
-    process.exit();
-});
 const getMessages = function() {
     return messages
 }

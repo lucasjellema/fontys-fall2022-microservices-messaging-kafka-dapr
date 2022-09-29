@@ -10,7 +10,7 @@
     - [Node Web Application for Producing Messages](#node-web-application-for-producing-messages)
     - [Node Web Application for Consuming Messages](#node-web-application-for-consuming-messages)
 
-In the pfirstrevious lab, you have produced and consumed messages manually, using Kafkacat and the Apache Kafka HQ GUI. In this lab, you will also produce and consume messages - this time in a programmatic way. You will use the Apache Kafka platform that you used in lab1 as well as the Node run time environment that you worked with in lab2. You will interact with Kafka from Node in the pure form with one of the most popular libraries for using Kafka from Node applications. 
+In the previous lab, you have produced and consumed messages manually, using Kafkacat and the Apache Kafka HQ GUI. In this lab, you will also produce and consume messages - this time in a programmatic way. You will use the Apache Kafka platform that you used in lab1 as well as the Node run time environment that you worked with in lab2. You will interact with Kafka from Node in the pure form with one of the most popular libraries for using Kafka from Node applications. 
 
 ## Node interacting with Apache Kafka
 
@@ -134,6 +134,7 @@ Earlier in this lab we looked at a very simple Node web application: *hello-worl
 This Node application starts an HTTP Server to handle GET requests. It uses a query parameter called *message* for the content of the message to publish to the Kafka Topic. A module referenced as *./produce* is *required* into the *web-producer.js*. This is interpreted by the Node runtime as: find a local file *produce.js*, load it and make available as public objects anything in *module.exports*. The file *produce.js* is largely the same as before, only this time it does not automatically start generating and publishing messages and it has a function called *produceMessage* that produces one message to the `topic`. This function is exported in *module.exports* and as such available in *web-producer.js*. 
 
 Before you can run the application, you need to bring in the dependencies. To quickly open a terminal window in the right directory, open the content menu for the *web-producer.js* file and choose option *Open in Integrated Terminal*. A terminal window opens and navigates to the correct directory.
+![](images/open-integrated-terminal.png)  
 
 In this terminal window, now run:
 ```

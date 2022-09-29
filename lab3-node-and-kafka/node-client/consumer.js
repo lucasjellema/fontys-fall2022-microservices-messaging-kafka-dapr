@@ -14,9 +14,8 @@ const consumeMessage = async () => {
 
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      console.log({
-        value: message.value.toString(),        
-      })
+      const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`
+      console.log(`- ${prefix} ${message.key}#${message.value}`)
     },
   })
 }

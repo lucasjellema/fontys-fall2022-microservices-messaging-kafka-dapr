@@ -6,6 +6,8 @@ tasks:
   - command: |
       export PUBLIC_IP=127.0.0.1
       docker-compose up
+      gp env KAFKAJS_NO_PARTITIONER_WARNING=1
+
 ports:
 
   # AKHQ

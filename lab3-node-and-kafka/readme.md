@@ -2,7 +2,7 @@
 
 TABLE OF CONTENTS
 
-In the previous lab, you have produced and consumed messages manually, using Kafkacat and the Apache Kafka HQ GUI. In this lab, you will also produce and consume messages - this time in a programmatic way. You will use the Apache Kafka platform that you used in lab1 as well as the Node run time environment that you worked with in lab2. You will interact with Kafka from Node in the pure form with one of the most popular libraries for using Kafka from Node applications. 
+In the pfirstrevious lab, you have produced and consumed messages manually, using Kafkacat and the Apache Kafka HQ GUI. In this lab, you will also produce and consume messages - this time in a programmatic way. You will use the Apache Kafka platform that you used in lab1 as well as the Node run time environment that you worked with in lab2. You will interact with Kafka from Node in the pure form with one of the most popular libraries for using Kafka from Node applications. 
 
 ## Node interacting with Apache Kafka
 
@@ -12,52 +12,51 @@ The sources for this part of the lab are in the directory *node-kafka-client* in
 
 ### Producing to test-topic in Node
 
-Take a look at the *package.json* file. You will see a dependency configured on *node-rdkafka*:
+Take a look at the *package.json* file. You will see a dependency configured on *kafkajs*:
 ```
   "dependencies": {
-    "node-rdkafka": "^2.10.1"
+    "kafkajs": "^2.2.0"
   }
 ```
-Now look at the file *produce.js*. The first line of this Node application also refers to *node-rdkafka*. When we execute *produce.js*, the Node runtime will try to load the module *node-rdkafka*. It will try to do so by locating a directory called *node-rdkafka* under the directory *node-modules* that lives in the root of the application. At this moment, you probably do not yet have this *node-modules* directory. It gets created when you instruct *npm* to download all libraries on which the application depends - as configured in *package.json*.
+Now look at the file *produce.js*. The first line of this Node application also refers to *kafkajs*. When we execute *produce.js*, the Node runtime will try to load the module *kafkajs*. It will try to do so by locating a directory called *kafkajs* under the directory *node-modules* that lives in the root of the application. At this moment, you probably do not yet have this *node-modules* directory. It gets created when you instruct *npm* to download all libraries on which the application depends - as configured in *package.json*.
 
-To get going, open a command line window and navigate to directory *lab3-node-and-kafka/node-kafka-client*. Then execute
+Kafkajs is an easy to use, modern Node client for Apache Kafka. See: [https://kafka.js.org/](https://kafka.js.org/) for more details on this Kafka client library for Node.
+
+To get going, open a bash terminal window and navigate to directory *lab3-node-and-kafka/node-client*. Then execute `npm install` to download the node modules this application depends on.
+
 ```
+cd lab3-node-and-kafka/node-client/
 npm install
 ```
-This instructs *npm* to download and install in directory *node-modules* all modules that are required directly or indirectly by the application - as defined in the *dependencies* property in *package.json*.
 
-It will take some time to complete this command. About 45MB worth of npm modules are downloaded.
+This instructs *npm* to download and install in directory *node-modules* all modules that are required directly or indirectly by the application - as defined in the *dependencies* property in *package.json*.
 
 This is as good a time as any to open file *produce.js* again and interpret what it does.
 
-* compose configuration (primarily Kafka Broker endpoints)
-* create a Producer (based on the configuration)
-* prepare the Producer (with event handlers to respond)
-* connect the Producer
-* generate and produce events (Feel free to change the contents of the generated messages)
+* instantiate the KafkaJS client by pointing it towards the brokers in the Kafka clusters; the IP addresses are configured in the docker-compose.yml file
+* create a producer through the KafkaJS client
+* connect the producer
+* produce the message to a specific topic (in this case without specifying a partition)
 * disconnect the producer
 
-Before you can run the producer application, make sure that the KAFKA_BROKERS configuration in *config.js* is correct for your environment - and that the KAFKA_TOPIC refers to a topic that already exists on your Kafka Cluster.
-
-When these conditions are met - and `npm install` is done installing the required node modules, it is time to produce some messages to the topic.  
+When `npm install` is done installing - which really should not take long with kafkajs -  it is time to produce some messages to the topic.  
 
 Run this command:
 ```
-node produce.js
+node producer.js
 ```
-You should see the following output:
-```
-Producer connection to Kafka Cluster is ready; message production starts now
-producer rdkafka#producer-1 is done producing messages to Kafka Topic test-topic.
-```
-When you check either in Kafka Console or in Apache Kafka HQ, you should be able to see a batch of fresh messages published to the `test-topic` (or the topic you have specified if you have changed the name of the topic).
+
+You will see little output. Once done, the application reports it is done and it exits. The message has been delivered to the topic.
+
+When you check either in Kafka Console or in Apache Kafka HQ, you should be able to see a fresh message published to the `test-topic` (or the topic you have specified if you have changed the name of the topic).
+
 
 ### Consuming from test-topic in Node
-The obvious next step is the consumption of messages. We will again use a Node application for this. But please realize that their is absolutely no need for this. Once messages have been produced, we cannot even tell from which type of client they have been produced. So the producing application could have been Java, Python, C, .NET just as well as Node. And the consuming application could be implemented in any technology that has a way to interact with the Kafka Cluster. The choice for Node here is one of convenience.
+The obvious next step is the consumption of messages. We will again use a Node application for this. But please realize that there is absolutely no need for consuming using Node: once messages have been produced, we cannot even tell from which type of client they have been produced. So the producing application could have been Java, Python, C, .NET just as well as Node. And the consuming application could be implemented in any technology that has a way to interact with the Kafka Cluster. The choice for Node here is one of convenience.
 
-Check the contents of the file *consume.js*. It has the same dependencies as *produce.js*, on both NPM module *node-rdkafka* and local file *config.js*. The implementation of consume.js has been done using the Stream Consumer; for the *traditional* approach, see *consume-non-stream.js*.
+Check the contents of the file *consumer.js*. It is quite similar to *producer.js*, also using *kafkajs* . 
 
-What goes on in the *consume.js* application?
+What goes on in the *consumer.js* application?
 
 * compose configuration (consists primarily of the Kafka Broker endpoints as well as the Configuration Group Id)
 * create a StreamReader (based on the configuration, with the offset to the earliest message available on the topic and with subscription(s) on the topic(s) defined in config.js )
@@ -67,105 +66,26 @@ What goes on in the *consume.js* application?
 
 Run the Kafka Consumer application:
 ```
-node consume.js
+node consumer.js
 ```
-This should print all messages on the *test-topic* to the console.
+This should print all messages on the *test-topic* to the console. You should see something similar to the following output - with different timestamps obviously - reporting on the consumption of a message that was first produced from *producer.js*:
+
+```
+{"level":"INFO","timestamp":"2022-09-29T04:41:39.772Z","logger":"kafkajs","message":"[Consumer] Starting","groupId":"test-group"}
+{"level":"INFO","timestamp":"2022-09-29T04:41:39.903Z","logger":"kafkajs","message":"[ConsumerGroup] Consumer has joined the group","groupId":"test-group","memberId":"my-app-fdaed509-2252-4513-8563-377960170ced","leaderId":"my-app-fdaed509-2252-4513-8563-377960170ced","isLeader":true,"memberAssignment":{"test-topic":[0,1]},"groupProtocol":"RoundRobinAssigner","duration":129}
+{ value: 'Here I am telling you a story' }
+```
+You can stop the application with `CTRL+C`.
 
 If you run the consumer application a second time, you will probably not see any messages - or only new ones. This is the effect of using a Consumer Group Id. The Kafka Cluster retains the Consumer Group Id and its corresponding offset. In the second run, the consuming applications joins the same Consumer Group as before. This group has already consumed all messages. If you now change the Consumer Group Id and run the Node application again, you will see all messages on the topic once more. This is because for this new Consumer Group, no messages at all have been read from the topic, and Kafka will offer up all messages from the beginning of time.
 
 ### Check in Apache Kafka HQ
-Open AKHQ in a browser. It has been started as part of the **Kafka platform ** and can be reached on <http://kafka:28042/> (provided you added the IP address to the *hosts* file associated with the host name *kafka*).
+Open the AKHQ browser window. Go to the Topics page and focus on *test-topic*. Verify that the messages published from the Node application show up. Take note of the consumer group registered for this topic: you should see the same label(s) as defined in the *consumer.js* Node application.
 
-Go to the Topics page and focus on *test-topic*. Verify that the messages published from the Node application show up. Take note of the consumer group registered for this topic: you should see the same label(s) as defined in the Node application.
+Open the Consumer Groups page. You will see the consumer group details. If you run the *consumer.js* application once more, you will see the number of members for the consumer group go up by one. When you drill down into the consumer group and inspect the members, you can see the type of client and the IP address for the member a well as the partition the member is linked to.
 
-Open the Consumer Groups page. You will see the consumer group details. If you run the *consume.js* application once more, you will the number of members for the consumer group go up nu one. When you drill down into the consumer group and inspect the members, you can see the type of client and the IP address for the member a well as the partition the member is linked to.
+On the Topic page, you can produce a message to the *test-topic*. This message will of course be consumed by the *consumer.js* application.
 
-On the Topic page, you can produce a message to the *test-topic*. This message will of course be consumed by the *consume.js* application.
-
-
-## Node interacting with Apache Kafka through Dapr.io
-
-Focus on directory *node-kafka-dapr*. Run 
-```
-npm install
-```
-to bring in the Dapr SDK for Node. But not the *node-rdkafka* module. 
-
-File *pubsub.yaml* defines a pubsub component. Make sure that the content of this file is configured correctly for your Apache Kafka environment (This basically means for local Kafka deployment that the brokers' endpoints need to have been defined correctly. When you make use of Cloud Karafka, you need a slightly extended configuration, with credentials):
-
-```
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: pubsub
-  namespace: default
-spec:
-  type: pubsub.kafka
-  version: v1
-  metadata:
-  - name: brokers # Required. Kafka broker connection setting
-    value: "kafka-1:19092,kafka-2:29093,kafka-3:29094"
-  - name: authType # Required.
-    value: "none"
-  - name: authRequired
-    value: "false"
-```    
-The *orders* topic needs to be created on your Kafka Cluster. You can create the topic through the AKHQ web UI or through the Kafka CLI Tool:
-```
-docker exec -ti kafka-1 bash
-kafka-topics --create --if-not-exists --zookeeper zookeeper-1:2181 --topic orders --partitions 3 --replication-factor 2
-```
-
-Run the same Daprized consumer application as earlier - not telling it anything about the change for Pub/Sub from Redis to Kafka:
-
-```
-export APP_PORT=6002
-export DAPR_HTTP_PORT=3602
-dapr run --app-id order-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path .   node consumer.js
-```
-You should see in the logging that the pubsub component was loaded ("name: pubsub, type: pubsub.kafka/v1") and that a subscription is made on the PubSub component
-
-To publish a message to the *orders* topic in the default *pubsub* component, run this CLI command:
-```
-dapr publish --publish-app-id order-processor --pubsub pubsub --topic orders  --data '{"orderId": "101", "product", "Apache Kafka Demo Kit"}' 
-```
-In the logging for the *order-processor* you should see evidence of the consumption of the message. 
-
-The publisher application *orderprocessing* is a simple Node application that sends random messages to the *orders* topic on *pubsub*. Check the file *publisher.js*.  It creates a Dapr client - the connection from Node application to the Sidecar - and uses the *pubsub.publish* method on the client to publish messages to the specified TOPIC on the indicated PUBSUB component. 
-
-Run the application with the following statement, and check if the messages it produces reach the consumer:
-
-```
-export APP_PORT=6001
-export DAPR_HTTP_PORT=3601
-dapr run --app-id orderprocessing --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path .  node publisher.js 
-```
-The publisher application is started and publishes all it has to say - to its Dapr Sidecar. This loyal assistant publishes the messages onwards, to what we know is the Apache Kafka pub/sub implementation.
-
-When you check the messages in the AKHQ UI or using the Kafka command line you will see that they contain more data than our application put into them. The Dapr Sidecar decorates our application's payload with quite a bit of metadata, as you can see in this sample. The message that the application published in this case is found as the *data* property in the JSON message payload:
-
-```
-{
-  "source": "orderprocessing",
-  "type": "com.dapr.event.sent",
-  "topic": "orders",
-  "traceid": "00-1d8361f5392c720651aa10727694d255-93a147f099702644-01",
-  "tracestate": "",
-  "data": 737,
-  "id": "02b95dbf-449c-4857-aa68-fe36a7a17333",
-  "specversion": "1.0",
-  "datacontenttype": "application/json",
-  "pubsubname": "pubsub"
-}
-```
-Other information is used by Dapr to provide telemetry tracing and routing information (for example reported through Zipkin), to cater for middleware such as authorization and advanced routing.  
-
-When we consume the message through a Dapr sidecar, all we get is the payload itself. 
-
-### Resources
-Check [Detailed documentation on the Dapr.io Apache Kafka pubsub component](https://docs.dapr.io/reference/components-reference/supported-pubsub/setup-apache-kafka/).
-
-A second way to use Apache Kafka through Dapr is with the Binding component: [Docs on Dapr Apache Kafka input and output binding component](https://docs.dapr.io/reference/components-reference/supported-bindings/kafka/).
 
 
 ## Bonus: Node Web Application

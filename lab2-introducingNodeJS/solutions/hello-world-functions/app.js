@@ -36,10 +36,17 @@ print("Hello")
 execute(print, "Hello")
 execute(otherPrint, "Hello")
 
-let pf1 = getPrintFunction("Hello")
 let pf2 = getPrintFunction("World")
+let pf1 = getPrintFunction("Hello")
+
+++printFunctionInstantiationCount
 
 pf1() 
 pf2()
+
+pf1()
+
+
+
 
 execute(pf1)  // pf1 is still available, with the value of "Hello" set in the closure

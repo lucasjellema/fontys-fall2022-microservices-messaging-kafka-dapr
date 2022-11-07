@@ -6,7 +6,7 @@ const kafka = new Kafka({
   logLevel: logLevel.INFO
 })
 
-
+// create a producer client on the Kafka Cluster
 const producer = kafka.producer()
 
 const produceMessage = async (message) => {
@@ -17,7 +17,6 @@ const produceMessage = async (message) => {
       { key: "2", value: message },
     ],
   })
-
   await producer.disconnect()
   console.log("Done Producing")
 }

@@ -2,11 +2,27 @@ tasks:
   - init: |
       docker-compose pull
       # open the readme document for the first lab in VS code; note: thanks to the configuration in .vscode/settings.json, the document opens in markdown preview nide
-      gp open lab1-firstStepsWithKafka/readme.md
+      gp open lab4-exploring-dapr/readme.md
+      mkdir ~/dapr
+      wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | DAPR_INSTALL_DIR="$HOME/dapr" /bin/bash
+      # initialize dapr - see https://docs.dapr.io/getting-started/install-dapr-selfhost/ 
+      /home/gitpod/dapr/dapr init
+      # container instances with daprio/dapr, openzipkin/zipkin, and redis images should be running:
+      docker ps
+      /home/gitpod/dapr/dapr --version
+      # pull and run MySQL container instance - to experiment with MySQL as statestore instead of Redis
+      docker run --name dapr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest
+      alias dapr="/home/gitpod/dapr/dapr"
   - command: |
       export PUBLIC_IP=127.0.0.1
       docker-compose up
       gp env KAFKAJS_NO_PARTITIONER_WARNING=1
+  - name: Open one more Bash terminal and Set Alias for Dapr CLI
+    command: |
+      alias dapr="/home/gitpod/dapr/dapr"
+  - name: Open extra one more Bash terminal and Set Alias for Dapr CLI
+    command: |
+      alias dapr="/home/gitpod/dapr/dapr"
 
 ports:
 

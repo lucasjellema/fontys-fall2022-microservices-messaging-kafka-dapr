@@ -196,3 +196,5 @@ curl http://localhost:3510/v1.0/state/durable-statestore/name
 ```
 
 Just as a manager would like to ask the same questions of their personal assistant when it comes to remembering stuff, regardless of whether the PA writes things down on paper, memorizes them or uses a friend to retain the information, it is a fine thing for application developers to be able to use the same interaction with Dapr regardless of whether state is stored in MySQL, Redis Cache or any of the other types of state store that Dapr supports. In fact, an application developer does not need to know how and where the state will be stored and this can be changed at deployment time as the application administrator sees fit.
+
+Stop the Dapr-ized application. Time to move to the next lab where you will combine Node applications with Dapr to handle interactions. 

@@ -28,7 +28,7 @@ ports:
 
   # AKHQ
   - port: 28042
-    onOpen: open-preview
+    onOpen: ignore
     visibility: public
 
   # Node

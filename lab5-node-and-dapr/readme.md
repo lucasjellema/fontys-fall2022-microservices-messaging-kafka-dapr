@@ -7,7 +7,7 @@ Let us find out how the Dapr sidecar - and the services it can deliver - can be 
 
 The Dapr Node SDK will be installed using NPM with this statement executed from the command line in directory *hello-world-dapr*:
 ```
-npm i dapr-client --save
+npm install --save @dapr/dapr
 ```
 Check package.json. It includes the dependency of the Node application on the dapr-client module. The modules themselves are downloaded into the *node-modules* directory, when you execute this command (this one must be executed because otherwise the code will not work):
 
@@ -16,9 +16,9 @@ npm install
 ```
 which reads the dependencies in package-lock.json or package.json and downloads and installs all direct (and indirect) dependencies.
 
-Check out the *app.js* file. It contains a small application that handles HTTP requests: it stores the name passed in the request and stores it as state (in a Dapr state store called *statestore*). It keeps track of the number of occurrences of each name and reports in the HTTP response how many times a name has been mentioned.
+Open file *app.js* in the editor. It contains a small application that handles HTTP requests: it stores the name passed in the request and stores it as state (in a Dapr state store called *statestore*). It keeps track of the number of occurrences of each name and reports in the HTTP response how many times a name has been mentioned.
 
-The Node application is started through Dapr (using `dapr run --app-id nodeapp node app.js`) and in that way gets its own Dapr sidecar that handles the state related activities. The Node application uses the Node SDK to communicate with the Sidecar - instead of and much more convenient and elegant then explicit HTTP or gRPC interactions.  
+The Node application is started through Dapr (using `dapr run --app-id nodeapp node app.js`) and in that way gets its own Dapr sidecar that handles the state related activities. The Node application uses the Node SDK to communicate with the Sidecar - instead of and much more convenient and elegant than explicit HTTP or gRPC interactions.  
 
 This diagram gives an overview of the application.
 ![](images/app-dapr-state.png)
@@ -30,46 +30,65 @@ The application does one other thing of interest: it reads from the state store 
 Run the application using these commands; Dapr will know the application as *nodeapp*:
 
 ```
+alias dapr="/home/gitpod/dapr/dapr"
 export DAPR_HTTP_PORT=3510
 export APP_PORT=3110
 dapr run --app-id nodeapp  --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node app.js
 ```
+The Gitpod workspace will alert you that two new port are activated: 3510 (for the Dapr sidecar) and 3110 (for the Node application itself). You can ignore this alert. 
+
+![](images/run-nodeapp-through-dapr.png)  
+
 You will find that the logging from the Sidecar and the Node application appear in the same terminal window. The logging shows the identification number assigned to the currently running instance. It will probably be *one*. If you stop the application and start it again, it should be incremented by one.
 
-Make a request to the application - you will need a second terminal window for this - a plain HTTP request directly to the application:
+Make a request to the application - you will need a second terminal window for this - a plain HTTP request directly to the application. The request as a URL query parameter called *name* and value *Joseph*. The application will process that parameter and put it in the state store through the Dapr sidecar:
 ```
 curl http://localhost:3110/?name=Joseph
 ```
+![](images/invoke-nodeapp.png)  
+
 You will get a response that indicates how often this name has occurred before. Make the same request again and find that the instance count has increased.
 
-A different way to make the request is not directly targetting the Node application and the port it is listening on, but instead to the Dapr sidecar - the application's personal assistant. The sidecar can apply authorization on the request, register telemetry and perform load balancing when multiple instances of the application are  running.
+A different way to make the request is not directly targetting the Node application and the port it is listening on, but instead to the Dapr sidecar - the application's personal assistant that has responsibility for making sure the request gets to its destination. The sidecar can apply authorization on the request, register telemetry and perform load balancing when multiple instances of the application are  running. In this case, only telemetry is enabled.
 
 The request through the sidecar is standardized into a somewhat elaborate URL:
 ```
 curl localhost:3510/v1.0/invoke/nodeapp/method/?name=Joseph
 ```
+
+![](images/invoke-nodeapp-through-dapr.png)  
+
 The first part - *localhost:3510* - refers to the Dapr sidecar and the HTTP port on which it is listening. The next segment - */v1.0/invoke* - identifies the Dapr API's *invoke* operation that we want to access. Subsequently we inform this API through */nodeapp* that we want to interact with the application that Dapr knows as *nodeapp* and we want to pass the URL query parameter *name* with *Joseph* as its value.  
 
-Stop the Node application and its Dapr sidecar. Ctrl+C in the terminal window where you started the application should do the trick. Then start the application again. Make the same curl call as before:
+Stop the Node application and its Dapr sidecar. Ctrl+C in the terminal window where you started the application should do the trick. 
+
+Then start the application again. Note: you can use different port numbers for *$APP_PORT* and/or *$DAPR_HTTP_PORT* and everything still works.
+
 ```
-curl http://localhost:3110/?name=Joseph
+dapr run --app-id nodeapp  --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node app.js
 ```
+
+In a second terminal window, make the same curl call as before:
+```
+curl localhost:3510/v1.0/invoke/nodeapp/method/?name=Joseph
+```
+![](images/call-nodeapp-after-restart.png)  
 
 This should convince you that the state written by the application survives the application. As long as the container with the Redis Cache is running, the state will be available across multiple application restarts and even multiple application instances.
 
 ### A second application
 
-We will now add a second application to the mix. It is defined in the file *front-app.js*. This application also handles HTTP requests with a name in it. To be honest: it a very flimsy front end that has the *nodeapp* do the real work - such as name counting and state managing. The *frontapp* invokes *nodeapp*. 
+We will now add a second application to the mix. It is defined in the file *front-app.js* in directory *hello-world-frontapp*. This application also handles HTTP requests with a name in it. To be honest: it a very flimsy front end that has the *nodeapp* do the real work - such as name counting and state managing. The *frontapp* invokes *nodeapp*. 
 
-Note: normally, frontapp would have its sidecar make the call to the nodeapp Dapr-application's sidecar without needing to know where it runs. However in some environments this does not seem to work as a result of incorrect name resolution. To work around this issue, we have *frontapp* call directly to the *nodeapp*'s sidecar instead of its own. This somewhat reduces the elegance of using the sidecars and is an unfortunate and tenmporary workaround.
+Frontapp does not invoke nodeapp directly or even via the nodeapp's sidecar. Instead it asks its own sidecar to make the call to the nodeapp (via the nodeapp's Dapr-application's sidecar) without needing to know where the application runs. 
 
 This diagram visualizes the situation with the two applications and their sidecars.
 
-![](images/front-app-nodeapp-statestore-sidecars.png)
+![](images/front-and-node-plus-sidecars.png)  
 
-Start the *frontapp* using these commands:
+Start the *frontapp* in a terminal in the *hello-world-frontapp* directory using these commands:
 ```
-export NODE_APP_DAPR_PORT=3510
+alias dapr="/home/gitpod/dapr/dapr"
 export APP_PORT=3220
 export DAPR_HTTP_PORT=3620
 dapr run --app-id frontapp  --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node front-app.js
@@ -78,16 +97,16 @@ Then make a call to the *frontapp* application using curl:
 ```
 curl localhost:3220/?name=Johnny
 ```
-This next call to the *frontapp* through its sidecar should work - but it does not in all environments; if it fails for you, just ignore it. It probably has to do with name resolution on your system and is not important for this handson lab.
+This next call to the *frontapp* through its sidecar is even more decoupled - allowing the frontapp's sidecar to apply authorization, produce telemetry and do load balancing. 
 ```
 curl localhost:3620/v1.0/invoke/frontapp/method/greet?name=Klaas
 ```
-Application *frontapp* has registered with Dapr and should also be known to *nodeapp*'s Dapr sidecar, so this call will work - invoking *frontapp* via this sidecar for *nodeapp*:
+
+Application *frontapp* has registered with Dapr and should also be known to *nodeapp*'s Dapr sidecar, so this call will work - invoking *frontapp* via the sidecar for *nodeapp*:
 ```
 curl localhost:3510/v1.0/invoke/frontapp/method/greet?name=Klaas
-
-curl localhost:3510/v1.0/invoke/nodeapp/method/?name=Joseph
 ```
+
 You should see the name occurrence increase with each call.
 
 Now kill *nodeapp*.

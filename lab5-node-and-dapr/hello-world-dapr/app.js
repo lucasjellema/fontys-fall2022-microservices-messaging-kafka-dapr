@@ -1,7 +1,6 @@
-const DaprClient = require("dapr-client").DaprClient;
-
-const http = require('http')
-const url = require('url')
+import { DaprClient, HttpMethod, CommunicationProtocolEnum } from '@dapr/dapr'; 
+import * as http from 'http';
+import * as url from 'url';
 
 const daprHost = "127.0.0.1";
 const daprPort = process.env.DAPR_HTTP_PORT || "3500";

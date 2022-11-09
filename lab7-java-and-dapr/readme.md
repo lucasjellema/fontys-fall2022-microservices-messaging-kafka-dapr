@@ -1,0 +1,68 @@
+# Java and Dapr - for Asynchronous Interaction and State Store 
+
+The previous two sections, we worked with Node. In this section we will look at how Dapr is used from Java applications. And how it helps us with asynchronous interactions aka the pubsub pattern in a similar way as we have seen in the Node application. 
+
+The Java applicaton we implement is very similar to the Node application in `app.js`. It subscribes to the `names` topic, consumes messages, updates the statestore with the incremented count of the name occurrences. We use the same Dapr component definitions - same statestore (Redis) and same pubsub component (Apache Kafka). 
+
+## Java and Dapr
+
+We will be looking at directory *lab7-java-and-dapr/async-java*. It contains a pom.xml file that describes the Java application and its dependencies. It really is a very simple application. The only thing worth checking out is `/main/java/com/myacme/service/controller/NameConsumerAndProcessorServiceController.java`. This is the class that registers with Dapr as an avid listener for the topic *names* on the *pubsub* with name *pubsub*.
+
+When an event appears on that pubsub's topic, a cloud event is constructed with a Name object as payload. The lambda function is executed and a single line with the name is written to the console.
+
+To make this work, you need to do a few simple things.
+
+Open a terminal for directory *lab7-java-and-dapr/async-java*.
+
+Execute 
+
+```
+mvn clean install
+```
+
+This will build the Java application. Because quite a few dependencies need to be downloaded, this step will take a few minutes - but only the first time.
+
+When the build success is reported in the console, a jar file will have been produced in the *target*  directory. It is this file that contains the Java application that consumes from the Kafka topic, supported by the Dapr Sidecar and the Dapr Java SDK to talk to the sidecar.
+
+Now to run the Java application along with its sidecar companion, while still in the directory *lab7-java-and-dapr/async-java*, execute the following:
+
+```
+alias dapr="/workspace/dapr/dapr"
+dapr run --app-port 8080 --app-id name-processor --components-path ../dapr-components -- java -jar target/NameConsumerAndProcessor-0.0.1-SNAPSHOT.jar
+```
+
+The Dapr Sidecar will start as well as the SpringBoot Java application. It - the sidecar - registers as a consumer on the Kafka Topic. The log file will contain an entry similar to this:
+
+```
+INFO[0003] app is subscribed to the following topics: [names] through pubsub=pubsub  app_id=name-processor instance=lucasjellem-fontysfall2-yxeo50udxjb scope=dapr.runtime type=log ver=1.9.3
+```
+
+Now also run the greeter application - the Node front-app.js application that we saw in the previous section. Note that we will now publish from a Node program through Dapr to Kafka and consume through Kafka to a Java application. 
+
+Open a terminal:
+```
+alias dapr="/workspace/dapr/dapr"
+export APP_PORT=6030
+export DAPR_HTTP_PORT=3630
+dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 
+dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 
+``` 
+
+Again, make a number of calls that will be handled by the front-app:
+```
+curl localhost:6030?name=Michael
+curl localhost:6030?name=Michael
+curl localhost:6030?name=Michael
+curl localhost:6030?name=Jonathan
+```
+
+The Java Application should write logging that demonstrates that the name messages are being received and processed.
+
+
+## Resources
+
+[Dapr Docs - Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/)
+[Dapr Docs - State Management](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/)
+[Dapr Docs - Java SDK](https://docs.dapr.io/developing-applications/sdks/java/)
+
+

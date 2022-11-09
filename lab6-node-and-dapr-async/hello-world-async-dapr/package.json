@@ -1,6 +1,7 @@
 {
+  "type": "module",
   "dependencies": {
-    "dapr-client": "^2.1.0",
+    "@dapr/dapr": "^2.5.0",
     "node-fetch": "2.0"
   }
 }

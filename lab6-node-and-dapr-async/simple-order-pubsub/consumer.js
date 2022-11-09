@@ -1,5 +1,4 @@
-const DaprServer = require("dapr-client").DaprServer;
-const CommunicationProtocolEnum = require("dapr-client").CommunicationProtocolEnum;
+import { DaprServer, CommunicationProtocolEnum } from '@dapr/dapr';
 
 //code
 const daprHost = "127.0.0.1"; 
@@ -15,7 +14,7 @@ start().catch((e) => {
 });
 
 async function start() {
-    const server = new DaprServer(
+    const daprserver = new DaprServer(
         serverHost, 
         serverPort, 
         daprHost, 
@@ -23,8 +22,8 @@ async function start() {
         CommunicationProtocolEnum.HTTP
     );
     //Subscribe to a topic
-    await server.pubsub.subscribe(PUBSUB_NAME, TOPIC_NAME, async (orderId) => { // function to be invoked whenever a message is received from the sidecar
+    await daprserver.pubsub.subscribe(PUBSUB_NAME, TOPIC_NAME, async (orderId) => { // function to be invoked whenever a message is received from the sidecar
         console.log(`Subscriber received: ${JSON.stringify(orderId)}`)
     });
-    await server.start();
+    await daprserver.start();
 }

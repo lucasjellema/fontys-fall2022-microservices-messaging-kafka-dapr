@@ -1,7 +1,6 @@
-const DaprClient = require("dapr-client").DaprClient;
-const CommunicationProtocolEnum = require("dapr-client").CommunicationProtocolEnum
-const http = require('http')
-const url = require('url')
+import { DaprClient, CommunicationProtocolEnum } from '@dapr/dapr';
+import * as http from 'http';
+import * as url from 'url';
 
 const PORT = process.env.APP_PORT || "3200"
 const daprHost = "127.0.0.1"; 
@@ -9,7 +8,7 @@ const daprPort = process.env.DAPR_HTTP_PORT ;
 
 const PUBSUB_NAME = "pubsub"
 const TOPIC_NAME  = "names"
-const client = new DaprClient(daprHost, daprPort, CommunicationProtocolEnum.HTTP)
+const daprclient = new DaprClient(daprHost, daprPort, CommunicationProtocolEnum.HTTP)
 
 const serviceStoreName = "statestore";
 
@@ -21,10 +20,10 @@ const server = http.createServer(async (req, res) => {
  
         if (key != null) {
             try {
-                await client.pubsub.publish(PUBSUB_NAME, TOPIC_NAME, key); // publish the name to the pubsub topic
+                await daprclient.pubsub.publish(PUBSUB_NAME, TOPIC_NAME, key); // publish the name to the pubsub topic
                 console.log(`Published name ${key} to topic ${TOPIC_NAME}`)
                 let value = 0;
-                let response = await client.state.get(serviceStoreName, key ); // try to find entry in statestore with this key
+                let response = await daprclient.state.get(serviceStoreName, key ); // try to find entry in statestore with this key
                 if (!response) {
                     value = 1; // if it was not found, the name is now mentioned for the first time
                 } else {

@@ -4,7 +4,7 @@ import * as url from 'url';
 
 const daprHost = "127.0.0.1";
 const daprPort = process.env.DAPR_HTTP_PORT || "3500";
-const client = new DaprClient(daprHost, daprPort);
+const daprclient = new DaprClient(daprHost, daprPort);
 
 const serviceStoreName = "statestore";
 var app_instance_id = 0
@@ -36,13 +36,13 @@ async function determineAppInstanceId() {
 
 async function retrieveIncrementSave(key) {
     let value = 0;
-    let response = await client.state.get(serviceStoreName, key );
+    let response = await daprclient.state.get(serviceStoreName, key );
     if (!response) {
         value = 1;
     } else {
         value = parseInt(response) + 1;
     }
-    response = await client.state.save(serviceStoreName, [
+    response = await daprclient.state.save(serviceStoreName, [
         {
             key: key,
             value: `${value}`

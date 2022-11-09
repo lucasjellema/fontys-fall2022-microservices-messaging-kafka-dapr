@@ -4,7 +4,7 @@ import * as url from 'url';
 
 const daprHost = "127.0.0.1";
 const daprPort = process.env.DAPR_HTTP_PORT || "3500";
-const client = new DaprClient(daprHost, daprPort);
+const daprclient = new DaprClient(daprHost, daprPort);
 
 const serviceStoreName = "statestore";
 const serviceAppId = "nodeapp";
@@ -19,7 +19,7 @@ const server = http.createServer(async (req, res) => {
             const query = url.parse(req.url, true).query
             let key = query.name ? query.name : "World"
             //Use Dapr Sidecar to invoke a remote method (the HelloWorld service)
-            const result = await client.invoker.invoke(serviceAppId, "/?" + key, HttpMethod.GET);
+            const result = await daprclient.invoker.invoke(serviceAppId, "/?" + key, HttpMethod.GET);
             res.end(result)
         }
         res.end()
@@ -36,13 +36,13 @@ async function determineAppInstanceId() {
 
 async function retrieveIncrementSave(key) {
     let value = 0;
-    let response = await client.state.get(serviceStoreName, key);
+    let response = await daprclient.state.get(serviceStoreName, key);
     if (!response) {
         value = 1;
     } else {
         value = parseInt(response) + 1;
     }
-    response = await client.state.save(serviceStoreName, [
+    response = await daprclient.state.save(serviceStoreName, [
         {
             key: key,
             value: `${value}`

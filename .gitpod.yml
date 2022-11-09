@@ -5,14 +5,16 @@ tasks:
       gp open lab4-exploring-dapr/readme.md
       mkdir /workspace/dapr
       wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | DAPR_INSTALL_DIR="/workspace/dapr" /bin/bash
+      # pull MySQL container instance - to experiment with MySQL as statestore instead of Redis
+      docker pull mysql:latest
+      alias dapr="/workspace/dapr/dapr"
+  - name: Initialize Dapr
+    command: |
       # initialize dapr - see https://docs.dapr.io/getting-started/install-dapr-selfhost/ 
       /workspace/dapr/dapr init
       # container instances with daprio/dapr, openzipkin/zipkin, and redis images should be running:
       docker ps
-      /home/gitpod/dapr/dapr --version
-      # pull MySQL container instance - to experiment with MySQL as statestore instead of Redis
-      docker pull mysql:latest
-      alias dapr="/workspace/dapr/dapr"
+      /workspace/dapr/dapr --version
   - command: |
       # run MySQL container instance - to experiment with MySQL as statestore instead of Redis
       docker run --name dapr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest

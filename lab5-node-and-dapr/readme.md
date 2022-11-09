@@ -89,6 +89,9 @@ This diagram visualizes the situation with the two applications and their sideca
 
 Start the *frontapp* in a terminal in the *hello-world-frontapp* directory using these commands:
 ```
+npm install --save @dapr/dapr
+npm install
+
 alias dapr="/workspace/dapr/dapr"
 
 export APP_PORT=3220
@@ -135,14 +138,29 @@ Open the URL [localhost:9411/](http://localhost:9411/) in your browser. This ope
 
 ![](images/zipkin-telemetery-collection.png)
 
-Query Zipkin for traces. You should find traces that start at *greeter* and also include *name-processor*. You now that we have removed the dependency from *greeter* on *name-processor* by having the information flow via the pubsub component. How does Zipkin know that greeter and name-processor are connected? Of course this is based on information provided by Dapr. Every call made by Dapr Sidecars includes a special header that identifies a trace or conversation. This header is added to messages published to a pubsub component and when a Dapr sidecar consumes such a message, it reads the header value and reports to Zipkin that it has processed a message on behalf of its application and it includes the header in that report. Because Zipkin already received that header when the Dapr sidecar that published the message (on behalf of the greeter application) reported its activity, Zipkin can construct the overall picture.
+First check the dependencies that Zipkin had derived. It shows messages flowing from frontapp to nodeapp and from nodeapp to statestore and also from frontapp to statestore. No surprises for us - given our intimate knowledge of the applications ;-).
+![](images/zipkin-dependencies.png)  
 
-When you go to the Dependencies tab in Zipkin, you will find a visual representation of the dependencies Zipkin has learned about. Granted, there are not that many now, but you can imagine how this type of insight in a complex network of microservices could add useful insights.
+For someone who does not know these applications or for a much more complex landscape with many more applications and dependencies, such insights can be very valuable. 
+
+How does Zipkin know that frontapp and nodeapp are connected? Of course this is based on information provided by Dapr. Every call made by Dapr Sidecars includes a special header that identifies a trace or conversation. This header is added to interactions to a statestore component and when Dapr sidecars invoke bindings or each other. The sidecar reports to Zipkin that it has performed an action on behalf of its application and it includes the header in that report. Because Zipkin receives traces from all sidecars for all cross boundary interactions, it can construct the overall picture.
+
+Click on the frontapp application node in the dependencies overview to get additional insights in what has been going on:
+![](images/dependencies-frontapp.png).
+
+If you click on the *Traces* button, you will navigate to a page that is primed to query all traces starting at frontapp. Click on the button *Run Query* to query all traces recorded for frontapp.
+![](images/frontapp-traces.png)  
+
+When you click on a trace with two spans - you will see how these two relate - and how much time of the parent span was actually taken up by the nested span. In this case, most of the time we were waiting for frontapp, we were in reality waiting for nodeapp.
+
+![](images/frontapp-nested-spans.png)  
+
+You can also filter on traces that take longer than a specific period and in that way find performance problems. 
 
 
 ## Next step: Decoupling Applications using Asynchronous Interaction with Dapr Pub/Sub support 
 
-However, it is not ideal that frontapp depends on nodeapp in this way, and has to report an exception when nodeapp is not available.
+It is not ideal that frontapp depends on nodeapp in this way, and has to report an exception when nodeapp is not available.
 
 We will make some changes to remove this dependency:
 * *frontapp* will publish a message to a pub/sub component (in Dapr, this is by default implemented on Redis)
@@ -157,8 +175,6 @@ Then open the *readme.md* document in directory *lab6-node-and-dapr-async*
 
 ## Resources
 
-[Dapr Docs - Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/)
 [Dapr Docs - State Management](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/)
-[Dapr Docs - Shared State between Applications](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/#shared-state-between-applications)
 
 

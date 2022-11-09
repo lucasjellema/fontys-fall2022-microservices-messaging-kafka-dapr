@@ -13,7 +13,7 @@ tasks:
   - name: Initialize Dapr
     command: |
       # initialize dapr - see https://docs.dapr.io/getting-started/install-dapr-selfhost/ 
-      sleep 10 seconds &&
+      sleep 10s &&
       /workspace/dapr/dapr init &&
       /workspace/dapr/dapr --version
   - command: |

@@ -14,7 +14,6 @@ tasks:
       docker pull mysql:latest
       alias dapr="/workspace/dapr/dapr"
   - command: |
-      /home/gitpod/dapr/dapr init
       # run MySQL container instance - to experiment with MySQL as statestore instead of Redis
       docker run --name dapr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest
       alias dapr="/workspace/dapr/dapr"

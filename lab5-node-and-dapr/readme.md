@@ -176,5 +176,5 @@ Then open the *readme.md* document in directory *lab6-node-and-dapr-async*
 ## Resources
 
 [Dapr Docs - State Management](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/)
-
+[Dapr Docs - Distributed Tracing](https://docs.dapr.io/developing-applications/building-blocks/observability/tracing-overview/)
 

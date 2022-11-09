@@ -6,11 +6,13 @@ const daprPort = process.env.DAPR_HTTP_PORT ;
 const PUBSUB_NAME = "pubsub"
 const TOPIC_NAME  = "orders"
 const daprclient = new DaprClient(daprHost, daprPort, CommunicationProtocolEnum.HTTP)
+const oneSecondInMs = 1000
+const publishingDelayInSeconds = 5
 
-var main = function() {
+var main = async function() {
     for(var i=0;i<10;i++) {
-        sleep(5000);
-        var orderId = Math.floor(Math.random() * (1000 - 1) + 1);
+        await sleep(publishingDelayInSeconds * oneSecondInMs);
+        var orderId = Math.floor(Math.random() * (oneSecondInMs - 1) + 1);
         start(orderId).catch((e) => {
             console.error(e);
             process.exit(1);

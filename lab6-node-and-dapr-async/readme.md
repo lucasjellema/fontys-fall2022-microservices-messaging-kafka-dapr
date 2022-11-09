@@ -1,14 +1,17 @@
 # Node and Dapr - Asynchronous Interactions 
 
+In this section we will look at how Dapr helps us with asynchronous interactions aka the pubsub pattern. Dapr hides most of the complexity and all of the pubsub technology specific details. The Dapr sidecar takes care of delivering a message to the message handling component as well subscribing to such a component and invoking the endpoint that handles the consumed messages.
 
-Open the *readme.md* document in directory *lab6-node-and-dapr-async*
+We will first use the default Dapr pubsub implementation - which is Redis - to decouple frontapp and nodeapp. Then, with very little effort, we will switch to Apache Kafka as the messaging platform.
 
 ## Node and Dapr - Pub/Sub for Asynchronous Communications
 
 Focus now on folder *hello-world-async-dapr*. It contains the app.js and front-app.js files that we have seen before - but they have been changed to handle asynchronous communications via the built in Pub/Sub support in Dapr based in this case on the out of the box Redis based message broker.
 
-Run 
+Open a terminal and switch to the directory:
 ```
+cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/simple-order-pubsub
+alias dapr="/workspace/dapr/dapr"
 npm install
 ```
 to have the required npm modules loaded to the *node-modules* directory.
@@ -19,7 +22,7 @@ cat ~/.dapr/components/pubsub.yaml
 ```
 The name of the component is *pubsub* and its type is *pubsub.redis*. Daprized applications will only mention the name (*pubsub*) when they want to publish or consume messages, not refer to *redis* in any way. They do not know about the *redis* subtype and if it changes (when for example a Pulsar or Hazelcast message broker is introduced), they are not impacted.
 
-Inspect the file *consumer.js* that contains a Dapr-based message consumer application. This application constructs a Dapr Server - an object that received requests from the Dapr Sidecar. Before, we saw the Dapr Client, that is used for sending instructions to the Sidecar.
+Inspect the file *consumer.js* that contains a Dapr-based message consumer application. This application constructs a Dapr Server - an object that receives requests *from* the Dapr Sidecar. Before, we saw the Dapr Client, that is used for sending instructions *to* the Sidecar.
 
 Using this DaprServer, a subscription is created for messages on topic *orders* on pubsub component *pubsub*. This subscription is provided an anonymous and asynchronous handler function that will be invoked for every message the Sidecar retrieves from the message topic. 
 
@@ -35,37 +38,55 @@ Check the logging to find that the application is listening on HTTP port 6002 to
 This diagram visualizes the current situation:
 ![](images/consumer-subscribed-to-topic.png)
 
-To publish a message to the *orders* topic in the default *pubsub* component, run this CLI command:
+To publish a message to the *orders* topic in the default *pubsub* component, run this CLI command in new terminal window:
 ```
+alias dapr="/workspace/dapr/dapr"
 dapr publish --publish-app-id order-processor --pubsub pubsub --topic orders --data '{"orderId": "100"}' 
 ```
-This tells Dapr to publish a message on behalf of an application with id *order-processor* (which is the application id of the only Dapr sidecar currently running) to the pubsub component called *pubsub* and a topic called *orders*. 
+This tells Dapr to publish a message on behalf of a imaginary application called *order-processor* (which is the application id of the only Dapr sidecar currently running) to the pubsub component called *pubsub* and a topic called *orders*. 
 
 Check in the logging from the consumer application if the message has been handed over by the Dapr sidecar to the application (after consuming it from the topic on the pubsub component).
+
+![](images/consumer-receives-message-from-pubsub.png)  
 
 ### Publishing from Node
 
 The publisher application *orderprocessing* is a simple Node application that sends random messages to the *orders* topic on *pubsub*. Check the file *publisher.js*.  It creates a Dapr client - the connection from Node application to the Sidecar - and uses the *pubsub.publish* method on the client to publish messages to the specified TOPIC on the indicated PUBSUB component. Through the Dapr component definitions (yaml files), multiple pubsub components (backed by the same or by different providers such as Redis, RabbitMQ, Hazelcast) can be defined, each with their own name. The default components file contains the *pubsub* component, backed by Redis Cache.
 
-Run the application with the following statement, and check if the messages it produces reach the consumer:
+```
+metadata:
+  name: pubsub
+spec:
+  type: pubsub.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: localhost:6379
+  - name: redisPassword
+    value: ""
+```    
+
+Run the producer application with the following statement, and check if the messages it produces reach the consumer:
 
 ```
+cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/simple-order-pubsub
+alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6001
 export DAPR_HTTP_PORT=3601
 dapr run --app-id orderprocessing --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node publisher.js 
 ```
-The publisher application is started and publishes all it has to say - to its Dapr Sidecar. This loyal assistant publishes the messages onwards, to what we know is the Redis Pub/Sub implementation.
+The publisher application is started and publishes all it has to say - to its Dapr Sidecar (simple integer values with a five-second internal). This loyal assistant publishes the messages onwards, to what we know is the Redis Pub/Sub implementation.
 
 This diagram puts it into a picture:
 ![](images/pub-and-sub-from-node.png)
 
 These messages are consumed by the *consumer* app's Sidecar because of its subscription on the *orders* topic. For each message, a call is made to the handler function. 
 
-Check the logging in the terminal window where the *consumer* app is running. You should see log entries for the messages received. Note that the messages in the log on the receiving end are not in the exact same order as they were sent in. They are delivered in the original order and each is processed in its own instance of the handler function. Since the messages in this case arrive almost at the same time and the processing times for the messages can vary slightly, the order of the log messages is not determined. 
+Check the logging in the terminal window where the *consumer* app is running. You should see log entries for the messages received. 
 
 Stop the consumer application. 
 
-Run the publisher application again. Messages are produced. And they are clearly not received at this point because the consumer is not available for consuming them. Are these messages now lost? Has communication broken down?
+Run the publisher application again. Messages are produced. And they are clearly not received by the consumer application at this point because it is not available for consuming them. Are these messages now lost? Has communication broken down?
 
 Start the consumer application once more to find out:
 ```
@@ -74,7 +95,7 @@ export DAPR_HTTP_PORT=3602
 dapr run --app-id order-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node consumer.js
 ```
 
-You should see that the messages published by the publisher application when the consumer was stopped are received by the consumer now that it is running again. This is a demonstration of asynchronous communication: two applications exchange messages through a middle man - the pubsub component - and have no dependency between them.  
+You should see that the messages published by the publisher application when the consumer was stopped are received by the consumer now that it is running again. This is a demonstration of asynchronous communication: two applications exchange messages through a middle man - the pubsub component - and have no dependency between them. Note: all the messages are processed at almost the same time by different instances of the anonymous handler function running in parallel. This may result in the output from these functions being sent to the console in a different order than the original publication sequence of these messages.  
 
 The handshake between Dapr sidecar and pubsub component on behalf of the consumer is identified through the app-id. Messages are delivered only once to a specific consumer. When a new consumer arrives on the scene - with an app-id that has not been seen before - it will receive all messages the queue is still retaining on the topic in question.
 
@@ -84,25 +105,38 @@ Start the consumer application *with a new identity* - defined by the *app-id* p
 ```
 dapr run --app-id new-order-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node consumer.js
 ```
-and watch it receive all earlier published messages. 
+and watch it receive all earlier published messages - again most probably in a different order than the original publication order. 
+
+### Quick Peek at telemetry
+
+Open the URL localhost:9411/ in your browser. This once more opens Zipkin, the telemetry collector shipped with Dapr.io. It provides insight in the traces collected from interactions between Daprized applications and via Dapr sidecars, also when these interactions are asynchronous through a pubsub component. Open the Dependencies tab and query for dependencies. You will see something similar to the following image.
+
+![](images/async-dependency-zipkin.png)  
+
+A dependency is presented between orderprocessing (the application id for the process started from publisher.js) and order-processor (the app id for the process started from consumer.js). We intuitively agree with this dependency. However, there is no explicit link between publisher.js and consumer.js. It was derived from the traces that the Dapr sidecars for orderprocessing (publisher.js) and order-processor (consumer.js) have published to Zipkin. 
+
+Again, for someone who does not know the application and the flow of information, this insight can be quite valuable!
 
 ## Leverage Dapr Pub/Sub between Front App and Node App
+
 As was discussed before, we want to break the synchronous dependency in the front-app on the node-app. To achieve this, we will make these changes:
-* the frontapp will publish a message to the *names* topic on the default pub/sub component 
-* the nodeapp will consume messages from this *names* topic on the pub/sub component and will write the name from each message it consumes to the state store and increase the occurrence count for that name
+* the frontapp will publish a message to the *names* topic on the pub/sub component called *pubsub* 
+* the nodeapp will consume messages from this *names* topic on the *pubsub* pub/sub component and will write the name from each message it consumes to the state store and increase the occurrence count for that name
 * the frontapp will no longer get information from synchronous calls to the nodeapp; it will read directly the occurrence count for a name from the state store; however: it will not write to the state store, that is the task for nodeapp. 
 
 Here we see a very simplistic application of the *CQRS* pattern where we segregate the responsibility for reading from a specific data set and writing data in that set.
 
 The front-app.js file is changed compared to the earlier implementation:
 * publish a message to the *names* topic on *pubsub* for every HTTP request that is processed
-* retrieve the current count for the name received in an HTTP request from the state store (assume zero if the name does not yet occur) and use the name count increased by one in the HTTP response  
+* retrieve the current count for the name received in an HTTP request from the state store (assume zero if the name does not yet occur) and add one to the value when composing the HTTP response (because the value retrieved from the statestore does not yet include the current request itself)  
 
 The Dapr client is used for both publishing the message and for retrieving state. The direct call from *front-app.js* to the (other) Node application has been removed.
 
 Run the *frontapp* with these statements:
 
 ```
+cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/hello-world-async-dapr
+alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6030
 export DAPR_HTTP_PORT=3630
 dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node front-app.js 

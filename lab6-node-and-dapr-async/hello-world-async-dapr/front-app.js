@@ -20,8 +20,6 @@ const server = http.createServer(async (req, res) => {
  
         if (key != null) {
             try {
-                await daprclient.pubsub.publish(PUBSUB_NAME, TOPIC_NAME, key); // publish the name to the pubsub topic
-                console.log(`Published name ${key} to topic ${TOPIC_NAME}`)
                 let value = 0;
                 let response = await daprclient.state.get(serviceStoreName, key ); // try to find entry in statestore with this key
                 if (!response) {
@@ -30,12 +28,18 @@ const server = http.createServer(async (req, res) => {
                     value = parseInt(response) + 1; // if it was found, the response indicates how many times before now the name was mentioned
                 }
                 text = `Hello ${key} - greeting #${value}`
+
+                // inform topic TOPIC_NAME on pubsub PUBSUB_NAME of the name that was requested
+                await daprclient.pubsub.publish(PUBSUB_NAME, TOPIC_NAME, key); // publish the name to the pubsub topic
+                console.log(`Published name ${key} to topic ${TOPIC_NAME}`)
+
             } catch (e) { text = `Exception occurred ${e}` }
         }
 
         res.setHeader('Content-Type', 'text/html');
         res.end(text)
     }
+    res.end()
 })
 
 server.listen(PORT);

@@ -56,7 +56,13 @@ curl localhost:6030?name=Michael
 curl localhost:6030?name=Jonathan
 ```
 
-The Java Application should write logging that demonstrates that the name messages are being received and processed.
+The Java Application should write logging that demonstrates that the name messages are being received and processed. The responses received for the curl commands should indicate that the state - the number of occurrences of a name - is stored, because the numbers returned keep increasing (in the expected manner).
+
+![](images/curl-commands-and-java-consumer-output.png)  
+
+The overall set up we have running now is not much different from what we had in the previous section: Java has taken the place of Node for the consuming application. The Java application also uses Dapr and the overall application architecture is hardly changed at all. If anyone wants to try their hand at Python or Go - we should see a similar lack of impact.
+
+![](images/java-and-node-dapr-kafka.png)  
 
 
 ## Resources
@@ -64,5 +70,5 @@ The Java Application should write logging that demonstrates that the name messag
 [Dapr Docs - Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/)
 [Dapr Docs - State Management](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/)
 [Dapr Docs - Java SDK](https://docs.dapr.io/developing-applications/sdks/java/)
-
+[Dapr Issue - Okta Library conflict](https://github.com/dapr/java-sdk/issues/515)
 

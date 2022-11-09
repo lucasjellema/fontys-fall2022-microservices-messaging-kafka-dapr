@@ -136,7 +136,7 @@ Note that the greeting # keeps increasing: the name and the number times it has 
 ## Telemetry, Traces and Dependencies
 Open the URL [localhost:9411/](http://localhost:9411/) in your browser. This opens Zipkin, the telemetry collector shipped with Dapr.io. It provides insight in the traces collected from interactions between Daprized applications and via Dapr sidecars. This helps us understand which interactions have taken place, how long each leg of an end-to-end flow has lasted, where things went wrong and what the nature was of each interaction. And it also helps learn about indirect interactions.
 
-![](images/zipkin-telemetery-collection.png)
+![](images/apps-dapr-zipkin.png)  
 
 First check the dependencies that Zipkin had derived. It shows messages flowing from frontapp to nodeapp and from nodeapp to statestore and also from frontapp to statestore. No surprises for us - given our intimate knowledge of the applications ;-).
 ![](images/zipkin-dependencies.png)  

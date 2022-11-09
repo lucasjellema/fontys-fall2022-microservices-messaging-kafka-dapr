@@ -42,7 +42,7 @@ async function retrieveIncrementSave(key) {
     } else {
         value = parseInt(response) + 1;
     }
-    response = await daprclient.state.save(serviceStoreName, [
+    let saveStateResponse = await daprclient.state.save(serviceStoreName, [
         {
             key: key,
             value: `${value}`

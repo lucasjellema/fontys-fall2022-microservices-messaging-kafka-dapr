@@ -27,7 +27,7 @@ async function start() {
     //Subscribe to a topic
     await daprserver.pubsub.subscribe(PUBSUB_NAME, TOPIC_NAME, async (name) => { // function to be invoked whenever a message is received from the sidecar
         console.log(`Subscriber received: ${name}`)
-        nameOccurrenceCount = await retrieveIncrementSave(name);
+        let nameOccurrenceCount = await retrieveIncrementSave(name);
         console.log(`Received message from topic ${TOPIC_NAME} with name ${name} that has occurred a total of ${nameOccurrenceCount} times`)
     });
     await daprserver.start();

@@ -109,7 +109,7 @@ and watch it receive all earlier published messages - again most probably in a d
 
 ### Quick Peek at telemetry
 
-Open the URL localhost:9411/ in your browser. This once more opens Zipkin, the telemetry collector shipped with Dapr.io. It provides insight in the traces collected from interactions between Daprized applications and via Dapr sidecars, also when these interactions are asynchronous through a pubsub component. Open the Dependencies tab and query for dependencies. You will see something similar to the following image.
+Open the URL localhost:9411/ in your browser. This once more opens Zipkin, the telemetry collector shipped with Dapr.io. It provides insight in the traces collected from interactions between Daprized applications and via Dapr sidecars, also when these interactions are asynchronous through a pubsub component. Open the Dependencies tab and query for dependencies. You will see something similar to the following image. Note: if you are fast enough, you will also see *new-order-processor* linked from "orderprocessing"
 
 ![](images/async-dependency-zipkin.png)  
 
@@ -136,6 +136,7 @@ Run the *frontapp* with these statements:
 
 ```
 cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/hello-world-async-dapr
+npm install 
 alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6030
 export DAPR_HTTP_PORT=3630
@@ -150,19 +151,24 @@ curl localhost:6030?name=Jonathan
 curl localhost:6030?name=Jonathan
 ```
 You will notice that the number of occurrences of the name is not increasing. The reason: the *frontapp* cannot write to the state store and the application that should consume the messages from the pubsub's topic is not yet running and therefore not yet updating the state store. Here is an overview of the situation right now:
+
 ![](images/front-app-publisher.png)  
 
 So let's run this *name-processor* using these statements:
  
 ```
+cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/hello-world-async-dapr
+alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6031
 export SERVER_PORT=6032
 export DAPR_HTTP_PORT=3631
 dapr run --app-id name-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node app.js 
 ```
+
 The logging for this application should show that the messages published earlier by *frontapp* are now consumed, and the statestore is updated. 
 
 Here is the situation in a picture:
+
 ![](images/front-app-pub-and-nameprocessor-sub.png)
 
 Note: this implementation is not entirely safe because multiple instances of the handler function, each working to process a different message, could end up in *race conditions* where one instance reads the value under a key from the state store, increases it and saves it. However, a second instance could have read the value right after or just before and do its own increment and save action. After both are done, the name occurrence count may be increased by one instead of two. For the purpose of this lab, we accept this possibility.    
@@ -179,27 +185,23 @@ This has to do with different modes of operation of the Dapr state store. By def
 
 We can instruct Dapr to use a state store as a global, shared area that is accessible to all applications.  See [Dapr Docs on global state store](https://docs.dapr.io/developing-applications/building-blocks/state-management/howto-share-state/).
 
-Copy the default state store component configuration to the local directory, as well as the *pubsub* component configuration: 
-```
-cp ~/.dapr/components/statestore.yaml .
-cp ~/.dapr/components/pubsub.yaml .
-```
-Check the contents of the file that specifies the state store component:
-```
-cat statestore.yaml
-```
-You see how the state store component is called *statestore* and is of type *state.redis*. Now edit the file and add a child element under metadata in the spec (at the same level as redisHost):
+Directory *lab6-node-and-dapr-async/hello-world-async-dapr/dapr-components* contains files *statestore.yaml* and *pubsub.yaml*, copied from directory *~/.dapr/components* .
+
+Check the contents of the file that specifies the state store component: `statestore.yaml`.
+
+You see how the state store component is called *statestore* and is of type *state.redis*. The state store component has a child element under metadata in the spec (at the same level as redisHost):
 ```
   - name: keyPrefix
     value: none  # none means no prefixing. Multiple applications share state across different state stores
 ```
-This setting instructs Dapr to treat keys used for accessing state in the state store as global keys - instead of application specific keys that are automatically prefixed with the application identifier.
 
-Save the file.
+This setting instructs Dapr to treat keys used for accessing state in the state store as global keys - instead of application specific keys that are automatically prefixed with the application identifier. 
+
+At this moment, the applications are running with the default statestore definition (in *~/.dapr/components*). To use the definition provided here, we have to run the Dapr sidecar with an instruction to use the Dapr component configurations in the application directory.
 
 Stop both the frontapp and the name-processor applications.
 
-Start both applications - with the added components-path parameter as shown below. This parameter tells Dapr to initialize components as defined by all the yaml files in the indicated directory (in this case the current directory). That is why you had to copy the pubsub.yaml file as well to the current directory, even though it is not changed. If you would not, it is not found by Dapr and call attempts to publish messages to topics on *pubsub* or subscribe to such topics will fail.
+Start both applications - with the added *components-path* parameter as shown below. This parameter tells Dapr to initialize components as defined by all the yaml files in the indicated directory (in this case the current directory). That is why you had to copy the pubsub.yaml file as well to the current directory, even though it is not changed. If you would not, it is not found by Dapr and call attempts to publish messages to topics on *pubsub* or subscribe to such topics will fail.
 
 ![](images/pubsub-and-global-state.png)
 
@@ -207,14 +209,14 @@ In one terminal, start the *greeter* application:
 ```
 export APP_PORT=6030
 export DAPR_HTTP_PORT=3630
-dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path .  node front-app.js 
+dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 
 ```
 and in a second terminal run *name-processor*:
 ```
 export APP_PORT=6031
 export SERVER_PORT=6032
 export DAPR_HTTP_PORT=3631
-dapr run --app-id name-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path . node app.js 
+dapr run --app-id name-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components node app.js 
 ```
 
 Again, make a number of calls that will be handled by the front-app:
@@ -226,14 +228,66 @@ curl localhost:6030?name=Jonathan
 ```
 At this point, the front-app should get the increased occurrence count from the state store, saved by the name-processor app, because now both apps work against the global shared state store. 
 
+
+## Switch PubSub provider from Redis to Apache Kafka
+
+And now at last we get back to Apache Kafka. In the previous section we have done asynchronous microservice interaction using Dapr pubsub - powered by Redis as the message backbone. However, we want Apache Kafka to be our underlying message infrastructure. And we already have the three-broker-cluster running (which you can verify through `docker ps` or by inspecting the AKHQ UI in the brower for port `28042`.
+
+Replace the contents of file `pubsub.yaml` with the following, in order to have pub/sub component *pubsub* provided by Apache Kafka instead of Redis:
+
+```
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  namespace: default
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers # Required. Kafka broker connection setting
+    value: "localhost:29092,localhost:29093,localhost:29094"
+  - name: authType # Required.
+    value: "none"
+  - name: authRequired
+    value: "false"
+```   
+
+Note: the name is the same as before (*pubsub*). The type is changed, from pubsub.redis to pubsub.kafka. And the metadata for this type is Kafka specific - and indicates the brokers in the Kafka-cluster.
+
+Our code - in `app.js` and `front-app.js` - does not need to know about this change in Pub/Sub provider. These modules communicate with the sidecars in generic pub/sub terms - without specific reference to Kafka or Redis. Before we can run the code, we need to make that the topic that the code expects to be dealing with - *names* - exists on the Kafka Cluster. 
+
+You can create the topic through the AKHQ web UI or through the Kafka CLI Tool:
+```
+docker exec -ti kafka-1 bash
+kafka-topics --create --if-not-exists --zookeeper zookeeper-1:2181 --topic names --partitions 3 --replication-factor 2
+exit
+```
+
+Stop the two applications - greeter and name-processor - and the start them again. This time - because of the change pubsub.yaml file - they will hook up with Apache Kafka.
+
+This image shows the current set up. Two independent applications with their sidecars - both interacting with Apache Kafka. In both cases, our custom code only has a dependency on Dapr - not on Redis or Kafka. 
+
+![](images/pubsub-through-kafka.png)  
+
+Invoke the greeter application a few times. This will result in responses - and in some messages on the new Kafka Topic *names*. You can inspect the contents of the topic in AKHQ in the browser. The next image demonstrates what this looks like - and what the message contents is. Note data used for constructing the trace information published to Zipkin.
+
+![](images/dapr-event-on-kafka-topic.png)  
+
+
 ## Telemetry, Traces and Dependencies
 Open the URL [localhost:9411/](http://localhost:9411/) in your browser. This opens Zipkin, the telemetry collector shipped with Dapr.io. It provides insight in the traces collected from interactions between Daprized applications and via Dapr sidecars. This helps us understand which interactions have taken place, how long each leg of an end-to-end flow has lasted, where things went wrong and what the nature was of each interaction. And it also helps learn about indirect interactions.
 
 ![](images/zipkin-telemetery-collection.png)
 
-Query Zipkin for traces. You should find traces that start at *greeter* and also include *name-processor*. You now that we have removed the dependency from *greeter* on *name-processor* by having the information flow via the pubsub component. How does Zipkin know that greeter and name-processor are connected? Of course this is based on information provided by Dapr. Every call made by Dapr Sidecars includes a special header that identifies a trace or conversation. This header is added to messages published to a pubsub component and when a Dapr sidecar consumes such a message, it reads the header value and reports to Zipkin that it has processed a message on behalf of its application and it includes the header in that report. Because Zipkin already received that header when the Dapr sidecar that published the message (on behalf of the greeter application) reported its activity, Zipkin can construct the overall picture.
+Query Zipkin for Dependencies. You will see the link from greeter to name-processor. 
+![](images/zipkin-deps-greeter-nameprocessor.png)  
 
-When you go to the Dependencies tab in Zipkin, you will find a visual representation of the dependencies Zipkin has learned about. Granted, there are not that many now, but you can imagine how this type of insight in a complex network of microservices could add useful insights.
+You know that we have removed the dependency from *greeter* on *name-processor* by having the information flow via the pubsub component. How does Zipkin know that greeter and name-processor are connected? Of course this is based on information provided by Dapr. Every call made by Dapr Sidecars includes a special header that identifies a trace or conversation. This header is added to messages published to a pubsub component and when a Dapr sidecar consumes such a message, it reads the header value and reports to Zipkin that it has processed a message on behalf of its application and it includes the header in that report. Because Zipkin already received that header when the Dapr sidecar that published the message (on behalf of the greeter application) reported its activity, Zipkin can construct the overall picture.
+
+When inspecting the traces, you will find two-level traces for greeter and nested name-processor, such as the one shown here:
+
+![](images/zipkin-two-level-trace.png)  
 
 ## Resources
 

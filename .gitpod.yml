@@ -14,6 +14,7 @@ tasks:
     command: |
       # initialize dapr - see https://docs.dapr.io/getting-started/install-dapr-selfhost/ 
       sleep 10s &&
+      /workspace/dapr/dapr uninstall &&   # init fails if already done; however, after workspace restart, part of the initialization is lost - hence the uninstall / re-init
       /workspace/dapr/dapr init &&
       /workspace/dapr/dapr --version
   - command: |

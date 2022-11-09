@@ -1,22 +1,23 @@
 tasks:
   - init: |
+      mkdir /workspace/dapr
+      wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | DAPR_INSTALL_DIR="/workspace/dapr" /bin/bash 
       docker-compose pull
       # open the readme document for the first lab in VS code; note: thanks to the configuration in .vscode/settings.json, the document opens in markdown preview nide
       gp open lab4-exploring-dapr/readme.md
-      mkdir /workspace/dapr
-      wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | DAPR_INSTALL_DIR="/workspace/dapr" /bin/bash && gp sync-done dapr-installed
       # pull MySQL container instance - to experiment with MySQL as statestore instead of Redis
       docker pull mysql:latest
+      # run MySQL container instance - to experiment with MySQL as statestore instead of Redis
+      docker run --name dapr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest
       alias dapr="/workspace/dapr/dapr"
   - name: Initialize Dapr
     command: |
       # initialize dapr - see https://docs.dapr.io/getting-started/install-dapr-selfhost/ 
-      gp sync-await dapr-installed && 
+      sleep 10 seconds &&
       /workspace/dapr/dapr init &&
       /workspace/dapr/dapr --version
   - command: |
-      # run MySQL container instance - to experiment with MySQL as statestore instead of Redis
-      docker run --name dapr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest
+      docker start dapr-mysql
       alias dapr="/workspace/dapr/dapr"
   - command: |
       export PUBLIC_IP=127.0.0.1

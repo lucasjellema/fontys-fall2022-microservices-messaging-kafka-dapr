@@ -37,6 +37,11 @@
 			<version>1.18.22</version>
 			<optional>true</optional>
 		</dependency>
+		<dependency> <!-- to fix the Companion issue - see https://docs.dapr.io/developing-applications/sdks/java/#importing-daprs-java-sdk -->
+           <groupId>com.squareup.okhttp3</groupId>
+           <artifactId>okhttp</artifactId>
+           <version>4.9.0</version>
+        </dependency>
 	</dependencies>
 
 	<build>

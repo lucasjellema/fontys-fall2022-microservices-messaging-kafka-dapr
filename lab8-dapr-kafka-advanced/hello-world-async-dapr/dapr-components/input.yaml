@@ -11,7 +11,7 @@ spec:
   - name: brokers # Required.
     value: "localhost:29092,localhost:29093,localhost:29094"
   - name: consumerGroup # Optional. Used for input bindings.
-    value: "name-processors2"
+    value: "name-processors"
   - name: authType 
     value: "none"
   - name: initialOffset # Optional. Used for input bindings.

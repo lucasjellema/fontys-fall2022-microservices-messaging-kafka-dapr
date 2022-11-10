@@ -10,7 +10,7 @@ spec:
     value: "localhost:29092,localhost:29093,localhost:29094"
   - name: publishTopic # Optional. Used for output bindings.
     value: "names"
-  - name: authRequired # Required.
-    value: "false"
+  - name: authType 
+    value: "none"
   - name: maxMessageBytes # Optional.
     value: 1024

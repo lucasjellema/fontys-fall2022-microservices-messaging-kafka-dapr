@@ -33,7 +33,7 @@ const server = http.createServer(async (req, res) => {
                 text = `Hello ${key} - greeting #${value}`
 
                 //Using Dapr SDK to invoke output binding (that results in a message being published on a Kafka Topic - but nothing here suggests that)
-                const result = await client.binding.send(NAMES_OUTPUT_BINDING_NAME, NAMES_OUTPUT_BINDING_OPERATION, key);
+                const result = await client.binding.send(NAMES_OUTPUT_BINDING_NAME, NAMES_OUTPUT_BINDING_OPERATION, {data: key});
 
                 console.log(`Published name ${key} to topic ${TOPIC_NAME} with result ${result}`)
 

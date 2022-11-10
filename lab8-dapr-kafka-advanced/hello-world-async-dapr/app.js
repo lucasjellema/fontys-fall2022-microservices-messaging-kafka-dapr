@@ -25,10 +25,10 @@ async function start() {
         CommunicationProtocolEnum.HTTP
     );
     //Subscribe to an input binding to trigger the function
-    await server.binding.receive(NAMES_INPUT_BINDING_NAME,  async (name) => { // function to be invoked whenever a message is received from the sidecar
-        console.log(`Input trigger received: ${name}`)
+    await daprserver.binding.receive(NAMES_INPUT_BINDING_NAME,  async (message) => { // function to be invoked whenever a message is received from the sidecar
+        const name = message.data
         let nameOccurrenceCount = await retrieveIncrementSave(name);
-        console.log(`Received message from input binding ${NAMES_INPUT_BINDING_NAME} with name ${name} that has occurred a total of ${nameOccurrenceCount} times`)
+         console.log(`Received message from input binding ${NAMES_INPUT_BINDING_NAME} with name ${name} that has occurred a total of ${nameOccurrenceCount} times`)
     });
     await daprserver.start();
 }

@@ -74,8 +74,105 @@ Just by configuring a binding component for Kafka and running a Dapr sidecar (ev
 
 If you want to use curl to interact with MongoDB, Azure Blob Storage, Twitter, GCP Pub/Sub, Apple Push Notifications then that can easily be arranged. Configure the destination as a Dapr output binding component, run the Dapr sidecar and interact over local http from curl to the sidecar in order to have the sidecar do the actual interaction with the special component you want to target,
 
+```
+alias dapr="/workspace/dapr/dapr"
+export DAPR_HTTP_PORT=6300
+dapr run --app-id dummy --dapr-http-port $DAPR_HTTP_PORT --components-path /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab8-dapr-kafka-advanced/hello-world-async-dapr/dapr-components
+```
+
+This next call - in any terminal window - is now enough to publish a message on the Kafka *names* topic:
+
+```
+export DAPR_HTTP_PORT=6300
+curl -X POST -H 'Content-Type: application/json' http://localhost:$DAPR_HTTP_PORT/v1.0/bindings/names-output -d '{ "data": "RatherAnOddName", "operation": "create" }'
+```
+
+You can check in the logging for the *app,js* application to see the name being received and processed and you can check in the AKHQ browser UI for confirmation.
+![](images/message-published-to-topic.png)  
+
+### Dapr Output Binding for MySQL
+
+Another example - interact with MySQL from curl through Dapr and an output binding:
+
+A MySQL Database is already running in a Docker container called *dapr-mysql*. To connect to this MySQL server from the MySQL client application from inside the container running MySQL:
+
+```
+docker exec -it dapr-mysql mysql -uroot -p
+```
+
+and type the password: `my-secret-pw`
+
+You can list the databases:
+```
+show databases;
+```
+
+Create a new database called *specialdata*, use the database and create a table:
+
+```
+create database specialdata;
+use specialdata;
+CREATE TABLE people (
+    PersonID int,
+    LastName varchar(255),
+    FirstName varchar(255),
+    City varchar(255)
+);
+```
+
+The table is now prepared. The next step is to prepare the Dapr output binding for interaction with this MySQL database *specialdata*. Add this definition at the end of the *output.yaml* file in directory *lab8-dapr-kafka-advanced/hello-world-async-dapr/dapr-components*:
+
+```
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: durable-data-store
+spec:
+  type: bindings.mysql
+  version: v1
+  metadata:
+  - name: url
+    value: "root:my-secret-pw@tcp(localhost:3306)/specialdata?allowNativePasswords=true"
+```
+
+Stop the Dapr sidecar you started before in this section and start it again with the same command as before:
+```
+alias dapr="/workspace/dapr/dapr"
+export DAPR_HTTP_PORT=6300
+dapr run --app-id dummy --dapr-http-port $DAPR_HTTP_PORT --components-path /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab8-dapr-kafka-advanced/hello-world-async-dapr/dapr-components
+```
+
+This next call - in any terminal window - is now enough to insert a record in the MySQL people table:
+
+```
+export DAPR_HTTP_PORT=6300
+curl -X POST -H 'Content-Type: application/json' http://localhost:$DAPR_HTTP_PORT/v1.0/bindings/durable-data-store -d '{ "metadata": { "sql": "INSERT INTO people (PersonID, LastName, FirstName, City) VALUES (42, \"Jefferson\", \"Thomas\", \"Washington\")"   }, "operation": "exec" }'
+```
+
+Note how the URL refers to the name of the binding that was defined in the *output.yaml* file (*durable-data-store*). This tells the Dapr Sidecar which component to target (the MySQL database) with this *exec* operation.
+
+After making this call, return to the terminal where you are still hovering in the MySQL client and execute:
+
+```
+select * from people;
+```
+
+to hopefully find that the record for Thomas Jefferson has been created. By defining the output binding for the MySQL database, the Dapr Sidecar now can connect and execute our SQL statements that we submit through simple HTTP calls.  
+
+![](images/curl-to-mysql-via-dapr.png)  
+
+Querying data can also be done with curl through Dapr sidecar:
+
+```
+export DAPR_HTTP_PORT=6300
+curl -X POST -H 'Content-Type: application/json' http://localhost:$DAPR_HTTP_PORT/v1.0/bindings/durable-data-store -d '{ "metadata": { "sql": "select * from people"   }, "operation": "query" }'
+```
+
+
 ## Resources
 
 [Dapr Docs - Kafka Binding Spec](https://docs.dapr.io/reference/components-reference/supported-bindings/kafka/)
 [Dapr Docs - How to Input Bindings](https://docs.dapr.io/developing-applications/building-blocks/bindings/howto-triggers/)
 [Dapr Docs - How To Output Bindings](https://docs.dapr.io/developing-applications/building-blocks/bindings/howto-bindings/)
+[Dapr Docs - MySQL Output Binding](https://docs.dapr.io/reference/components-reference/supported-bindings/mysql/)

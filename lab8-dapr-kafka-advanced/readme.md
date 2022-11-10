@@ -22,7 +22,48 @@ And now we will implement the same interactions and functionality, however inste
 
 ![](images/frontapp-kafka-daprbindings-app.png)  
 
+The changes that have to made are in four files: 
+* dapr-components/input.yaml
+* dapr-components/output.yaml
+* app.js
+* front-app.js
 
+In the first two files, the input and output bindings are configured. They are of type *bindings.kafka* and they both are configured for the same local Kafka Cluster. The input.yaml specifies the topics(s) to consume messages from and also the name of the consumer group to consume messages as. This allows us to run multiple consuming applications sharing the workload (provided the Kafka Topic is appropriately partitioned). The output.yaml file specifies the topic name to publish to. 
+
+In front-app.js there are some small changes. No more pubsub and no more topic name. Instead a slightly more cryptic `client.binding.send` call with the name of the output binding (that indirectly refers to a Kafka Topic to publish to) and the name of the operation to execute: `create` which is fairly generic. The code in front-app.js at this point does not show that what it does is publish a message on a Kafka Topic. 
+
+Similarly in app.js there is no reference to a topic or to the pubsub interaction. In its place, there is again a fairly generic `await server.binding.receive(NAMES_INPUT_BINDING_NAME, ..` call that is linked through the name of the input binding to the Kafka Input Binding as defined in input.yaml and thereby to the topic to consume message from and the consumer group to participate in. The code is free from dependencies on Kafka and even from consuming messages from a message broker. The exact same command would be used to be triggered by Cron, MQTT, Twitter or Zeebe job worker. 
+
+To run the applications, we use the same instructions as before. Open two terminal windows for directory *lab8-dapr-kafka-advanced\hello-world-async-dapr*. In the first, run the consuming application: 
+
+```
+alias dapr="/workspace/dapr/dapr"
+export APP_PORT=6031
+export SERVER_PORT=6032
+export DAPR_HTTP_PORT=3631
+dapr run --app-id name-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components node app.js 
+```
+
+In the second terminal, run the *front-app* that will produce the messages to Kafka: 
+
+```
+alias dapr="/workspace/dapr/dapr"
+export APP_PORT=6030
+export DAPR_HTTP_PORT=3630
+dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 
+```
+
+In a third terminal window, make a number of calls that will be handled by the front-app:
+```
+curl localhost:6030?name=Michael
+curl localhost:6030?name=Michael
+curl localhost:6030?name=William
+curl localhost:6030?name=William
+curl localhost:6030?name=William
+curl localhost:6030?name=Kate
+```
+
+You will not see much spectacle. These calls should give you proper responses. And the logging for the two applications should indicate the processing of the HTTP request from curl and handling an input trigger respectively.
 
 ## Special Use case: Dapr as Interaction Broker
 

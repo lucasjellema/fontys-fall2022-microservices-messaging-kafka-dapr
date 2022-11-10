@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: names-output
+spec:
+  type: bindings.kafka
+  version: v1
+  metadata: # see https://docs.dapr.io/reference/components-reference/supported-bindings/kafka/ for details
+  - name: brokers # Required.
+    value: "localhost:29092,localhost:29093,localhost:29094"
+  - name: publishTopic # Optional. Used for output bindings.
+    value: "names"
+  - name: authRequired # Required.
+    value: "false"
+  - name: maxMessageBytes # Optional.
+    value: 1024

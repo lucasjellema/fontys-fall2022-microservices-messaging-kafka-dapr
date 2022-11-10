@@ -1,0 +1,20 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: names-input
+spec:
+  type: bindings.kafka
+  version: v1
+  metadata: # see https://docs.dapr.io/reference/components-reference/supported-bindings/kafka/ for details
+  - name: topics # Optional. Used for input bindings.
+    value: "names"
+  - name: brokers # Required.
+    value: "localhost:29092,localhost:29093,localhost:29094"
+  - name: consumerGroup # Optional. Used for input bindings.
+    value: "name-processors"
+  - name: authRequired # Required.
+    value: "false"
+  - name: initialOffset # Optional. Used for input bindings.
+    value: "newest"
+  - name: maxMessageBytes # Optional.
+    value: 1024

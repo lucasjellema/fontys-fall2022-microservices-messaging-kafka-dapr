@@ -30,13 +30,14 @@ The changes that have to made are in four files:
 
 In the first two files, the input and output bindings are configured. They are of type *bindings.kafka* and they both are configured for the same local Kafka Cluster. The input.yaml specifies the topics(s) to consume messages from and also the name of the consumer group to consume messages as. This allows us to run multiple consuming applications sharing the workload (provided the Kafka Topic is appropriately partitioned). The output.yaml file specifies the topic name to publish to. 
 
-In front-app.js there are some small changes. No more pubsub and no more topic name. Instead a slightly more cryptic `client.binding.send` call with the name of the output binding (that indirectly refers to a Kafka Topic to publish to) and the name of the operation to execute: `create` which is fairly generic. The code in front-app.js at this point does not show that what it does is publish a message on a Kafka Topic. 
+In front-app.js there are some small changes. No more pubsub and no more topic name. Instead a slightly more cryptic `client.binding.send` call with the name of the output binding (that indirectly refers to a Kafka Topic to publish to) and the name of the operation to execute: `create` which is fairly generic. The code in front-app.js at this point does not reveal that what it does is publish a message on a Kafka Topic. Note: a small change was made to publish a valid JSON message (when a simple String is published - not a valid JSON object - errors occur within Dapr when it sends the message to the application: * Error: fails to send binding event to http app channel, status code: 400 body: {"code":400,"message":"Unexpected token \" in JSON *).
 
-Similarly in app.js there is no reference to a topic or to the pubsub interaction. In its place, there is again a fairly generic `await server.binding.receive(NAMES_INPUT_BINDING_NAME, ..` call that is linked through the name of the input binding to the Kafka Input Binding as defined in input.yaml and thereby to the topic to consume message from and the consumer group to participate in. The code is free from dependencies on Kafka and even from consuming messages from a message broker. The exact same command would be used to be triggered by Cron, MQTT, Twitter or Zeebe job worker. 
+Similarly in app.js there is no reference to a topic or to the pubsub interaction. In its place, there is again a fairly generic `await daprserver.binding.receive(NAMES_INPUT_BINDING_NAME, ..` call that is linked through the name of the input binding to the Kafka Input Binding as defined in input.yaml and thereby to the topic to consume message from and the consumer group to participate in. The code is free from dependencies on Kafka and even from consuming messages from a message broker. The exact same command would be used to be triggered by Cron, MQTT, Twitter or Zeebe job worker. Note: another small change was made in order to handle the JSON object that is now published by *front-app.js*.
 
 To run the applications, we use the same instructions as before. Open two terminal windows for directory *lab8-dapr-kafka-advanced\hello-world-async-dapr*. In the first, run the consuming application: 
 
 ```
+npm install
 alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6031
 export SERVER_PORT=6032

@@ -9,7 +9,7 @@ Some of the data managed by the CRM service is needed by the *IoT Platform servi
 
 It has been decided therefore by the architects in this utility company that a new *domain event* has been identified: the *Connection Mandate event* that has a simple payload with just two fields: the *connection identifier* and the *mandate level* (0, 1 or 2 for no mandate, billing only or real-time reading). The team that owns the CRM service is instructed to publish the Connection Mandate event to a Kafka Topic - whenever the mandate settings for a customer change. The IoT Platform team is likewise advised to consume events from the same Kafka Topic and use these events to construct an actual overview of the mandate settings for all connections (gas, electricity or heat) they want to collect smart meter readings from.
 
-![](images/diy-cqrs-1.png)
+![](images/diy-cqrs-1a.png)  
 
 In this lab, you will implement and run both microservices and create the Kafka Topic that provides the decoupled bridge between the two. The microservices will leverage Dapr for their interaction with Kafka (and perhaps the event broker will not be Kafka after all for all they know)
 
@@ -18,8 +18,9 @@ Steps
 * Create Kafka Topic for *Connection Mandate* events 
 * Extend CRM Microservice with publication of Connection Mandate messages to Kafka Topic
 * Create IoT Platform Microservice that handles REST GET requests for the Mandate setting for a specific connection - initially without any Mandate data
-* Extend IoT Platform Microservice with consumption of Connection Mandate messages from the corresponding Kafka Topic and use them to build the actual state of Connection Mandates
+* Extend IoT Platform Microservice with consumption of Connection Mandate messages from the corresponding Kafka Topic and use them to build the actual state of Connection Mandates - storing this state in the statestore
 * Experiment with stopping and starting the IoT Platform Microservice and its ability to retain or regain its state 
+* Switch from statestore implementation for the IoT Platform microservice - without losing data
 
 
 ## CRM Microservice 
@@ -49,6 +50,8 @@ Using  cURL or wget you can try to get in touch with the CRM Microservice. For e
 curl  http://localhost:$APP_PORT?customerId=42 -v
 ```
 You should find the console logging of the CRM service that the request was received, and you should see a response from it whose details are written to the command line by cURL. Defining appropriate status codes and messages go a long way in making the use of APIs a more pleasant experience. Try leaving out the customerId parameter; this should return a list of all customers.
+
+![](images/crm-step1.png)  
 
 Now try making a request for customer identifier with which real customer data is associated:
 ``` 
@@ -88,6 +91,8 @@ Note: you can also create a new topic on the *Topics* page in AKHQ
 
 ## Extend CRM Microservice with event publication to connection-mandates-topic
 
+![](images/crm2-withpub.png)  
+
 Add this next line at the top of *app.js*; this imports module producer, defined in file *produce.js*. This module provides the bridge to the Kafka Topic.
 ``` 
 import { produceMessage } from './produce.js';
@@ -112,7 +117,7 @@ Run the application again, using the following command:
 ```
 export APP_PORT=3005
 export DAPR_HTTP_PORT=3905
-dapr run --app-id crm --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --dapr-grpc-port 60002  --components-path dapr-components node app.js
+    dapr run --app-id crm --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node app.js
 ```
 
 
@@ -133,15 +138,19 @@ Let us turn our attention to the IoT Platform microservice in directory *IoTPlat
 
 Check the contents of *app.js*. You should be able by now to quickly recognize the HTTP Server that is started, listening at Port 3006. The server is configured to handle GET requests - and it only handle requests with a query parameter named *connectionId*.
 
-It will check for an entry in the *connectionMandates* object. This object will initially be empty and in the current state of the application, it will always remain empty. There, any request at present will end up in a 404 HTTP response status: resource not found.
+It will check for the value in the state store for the connectionId. The statestore will initially be empty and in the current state of the application, it will always remain empty. Therefore, any request at present will end up in a 404 HTTP response status: resource not found.
 
+Note that the statestore is based on Redis - as defined through the statestore name in the code (*statestore*) and the definition in the *statestore.yaml* file.
+ 
 Install the dependencies for the IoT Platform microservice and run the service from the command line in the *lab9-diy-cqrs\IoTPlatform* directory:
 ```
 npm install
 export APP_PORT=3008
 export DAPR_HTTP_PORT=3908
-dapr run --app-id crm --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node app.js
+dapr run --app-id iot-platform --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node app.js
 ```
+
+![](images/iotplatformmicro-redis.png)  
 
 Now try making a request for a connection identifier that exists in the *customer-database.csv* file - for which currently no mandate is known in the microservice:
 ``` 
@@ -185,12 +194,14 @@ main().catch(e => console.error(e));
 
 This code creates a DaprServer and a subscription on TOPIC_NAME in PUBSUB_NAME. When a message arrives, its content is written to the console first and then the message is stored in the statestore - using the connectId as the key. This statestore is private to the IoT Platform microservice. It is kept in sync with the connection mandate data in CRM because of the messages produced from CRM to Kafka and consumed and processed (in a decoupled way) by the IoT Platform microservice. 
 
+![](images/crm-iot-kafka-redis-dapr.png)  
+
 Start the IoT Platform microservice again, using
 ```
 export APP_REST_PORT=3008
 export APP_PORT=5002
 export DAPR_HTTP_PORT=3908
-dapr run --app-id crm --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node consume.js
+dapr run --app-id iot-platform --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node consume.js
 ```
 What you should see happening now is that after a few seconds the HTTP Server reports for duty - listening on Port 3008. And shortly after that, messages are consumed from the Kafka Topic (and processed into the statestore)  - even though none are being published at the moment. Try to understand which messages are consumed when the microservice is started. Hint: check the pubsub.yaml file in the dapr-components directory.
 
@@ -201,7 +212,11 @@ curl  http://localhost:$APP_REST_PORT?connectionId=7733
 ```
 This time you should get a connection mandate setting. Its level is probably 1 - because that is how it is defined in the *customer-database.csv* file.
 
-When you now change the connection mandate for this connection identifier, this change should rapidly be available in the IoT Platform service as well. Try this out with this call with cURL to the CRM API:
+The Zipkin dependency overview shows this new trace based flow:
+
+![](images/traceflow-deps.png)      
+
+When you now change the connection mandate for this connection identifier in CRM, this change should rapidly be available in the IoT Platform service as well. Try this out with this call with cURL to the CRM API:
 ```
 export APP_PORT=3005
 curl POST http://localhost:$APP_PORT/customers/7 -H "Content-Type: application/json" -d '{    "firstName": "Corinne",    "lastName": "Lopez",    "city": "Enschede",    "connectionId": "7733",   "connectionMandate": "2"}' -v
@@ -226,7 +241,7 @@ Now start it again.
 export APP_REST_PORT=3008
 export APP_PORT=5002
 export DAPR_HTTP_PORT=3908
-dapr run --app-id crm --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node app.js
+dapr run --app-id iot-platform --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node app.js
 ```
 
 From the logging, it is clear that no messages are consumed (unless you change the name of the consumer group in the pubsub.yaml file). However, the IoT Platform service manages its own local data store and the information from the messages processed earlier is stored in the statestore. When at this point you retrieve the mandate level once more for connection identifier 7733, it will be the level you set it at most recently: 2 (rather than 1 as defined in the CSV file)
@@ -277,7 +292,7 @@ curl  http://localhost:$APP_REST_PORT?connectionId=7733
 What happened when you restarted the CRM service is that it reloaded the *customer-database.csv* file and produced messages for each of the records. In this file, the mandate level for the connection identifier is 1. The readjustment to 2 was published to the Kafka Topic but not written to the CSV file. It did not become a persistent part of the state of the CRM service. The message on the Kafka Topic stating the mandate level at 1 - produced as the CRM service was restarting - has overridden the earlier message on the topic that declared the mandate level for 7733 to be 2. 
 
 
-### Bonus: Restoring the Statestore
+### Bonus: Switching to MySQL and Restoring the Statestore
 
 When something happens with the Redis container that implements the statestore for the IoT Platform microservice, then all connection mandate data is lost. Or when we switch to MySQL as the provider of the statestore. However, all messages that were used to create the data in that store are still available in the Kafka Topic. The statestore can be restored!
 
@@ -301,8 +316,10 @@ This *durable-statestore* is defined in file *statestore.yaml* in the directory 
 export APP_REST_PORT=3008
 export APP_PORT=5002
 export DAPR_HTTP_PORT=3908
-dapr run --app-id crm --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node app.js
+dapr run --app-id iot-platform --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT  --components-path dapr-components node app.js
 ```
+
+![](images/iot-mysql-statestore.png)  
 
 Try again to retrieve from the IoT Platform microservice the details for a specific connection:
 ``` 

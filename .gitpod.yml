@@ -16,7 +16,8 @@ tasks:
       sleep 10s &&
       /workspace/dapr/dapr uninstall &&   # init fails if already done; however, after workspace restart, part of the initialization is lost - hence the uninstall / re-init
       /workspace/dapr/dapr init &&
-      /workspace/dapr/dapr --version
+      echo 'alias dapr="/workspace/dapr/dapr"' >> ~/.bashrc
+      dapr --version
   - command: |
       docker start dapr-mysql
       alias dapr="/workspace/dapr/dapr"

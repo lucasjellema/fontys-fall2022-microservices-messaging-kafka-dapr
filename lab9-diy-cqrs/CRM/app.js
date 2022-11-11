@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as url from 'url';
 
 // ... insert module for Kafka event production
-import { produceMessage } from './produce.js';
+// import { produceMessage } from './produce.js';
 
 import * as importer from './customerImporter.js'
 const PORT = process.env.APP_PORT || "3005"
@@ -97,20 +97,20 @@ const processCustomer = function (customerObject) {
         console.log(`creating new customer with customer identifier ${customerId} `)
     }
     customers[customerId] = customerObject
-        // check if the either the customer is new or the mandate settings has changed; in both cases: an event needs to be produced
-        if (!oldCustomer || (oldCustomer.connectionId != customerObject.connectionId) || (oldCustomer.connectionMandate != customerObject.connectionMandate)) {
-          produceMessage(JSON.stringify({ "connectionId": customerObject.connectionId, "connectionMandate": customerObject.connectionMandate }))
-        }
+    // check if the either the customer is new or the mandate settings has changed; in both cases: an event needs to be produced
+    // if (!oldCustomer || (oldCustomer.connectionId != customerObject.connectionId) || (oldCustomer.connectionMandate != customerObject.connectionMandate)) {
+    //     produceMessage(JSON.stringify({ "connectionId": customerObject.connectionId, "connectionMandate": customerObject.connectionMandate }))
+    // }
     return customerId;
 }
 
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+// function sleep(ms) {
+//     return new Promise(resolve => setTimeout(resolve, ms));
+// }
 async function prepareCRMDatabase() {
     // wait 3 seconds to give the Kafka Producer time to get ready
-    await sleep(3000);
+    //await sleep(3000);
     importer.importCustomers(processCustomer)
 }
 prepareCRMDatabase()

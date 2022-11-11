@@ -27,7 +27,6 @@ When the build success is reported in the console, a jar file will have been pro
 Now to run the Java application along with its sidecar companion, while still in the directory *lab7-java-and-dapr/async-java*, execute the following:
 
 ```
-alias dapr="/workspace/dapr/dapr"
 dapr run --app-port 8080 --app-id name-processor --components-path ../dapr-components -- java -jar target/NameConsumerAndProcessor-0.0.1-SNAPSHOT.jar
 ```
 
@@ -41,7 +40,6 @@ Now also run the greeter application - the Node front-app.js application that we
 
 Open a terminal:
 ```
-alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6030
 export DAPR_HTTP_PORT=3630
 dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 

@@ -124,9 +124,8 @@ spec:
 
 Then run a Dapr sidecar in the terminal as follows:
 ```
-alias dapr="/home/gitpod/dapr/dapr"
 cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab4-exploring-dapr
-dapr run --app-id myotherapp --dapr-http-port 3510 --components-path .
+dapr run --app-id myotherapp --dapr-http-port 3501 --components-path .
 ```
 Note: if the current directory contains other yaml-files you may see unexpected and unintended effects as Dapr tries to interpret them as well. 
 
@@ -146,11 +145,11 @@ This confirms that Dapr initialized communications with the MySQL instance, it a
 Let us now create some state, in exactly the same way as we created state before - when it was saved in Redis Cache.
 
 ```
-curl -X POST -H "Content-Type: application/json" -d '[{ "key": "name", "value": "Your Own Name"}]' http://localhost:3510/v1.0/state/durable-statestore
+curl -X POST -H "Content-Type: application/json" -d '[{ "key": "name", "value": "Your Own Name"}]' http://localhost:3501/v1.0/state/durable-statestore
 ```
-Note that the portname at which we access the Dapr sidecar is 3510 and the name of the statestore requested is passed in the URL path as well. Let's check if the state was saved. First by retrieving it from the sidecar:
+Note that the portname at which we access the Dapr sidecar is 3501 and the name of the statestore requested is passed in the URL path as well. Let's check if the state was saved. First by retrieving it from the sidecar:
 ```
-curl http://localhost:3510/v1.0/state/durable-statestore/name
+curl http://localhost:3501/v1.0/state/durable-statestore/name
 ```
 
 And next by checking directly in the MySQL Database.
@@ -192,7 +191,7 @@ You can exit the mysql client by typing `exit`. This returns you to the command 
 
 You will find that when you ask Dapr for the state held under key *name* it will return the updated value, once again proving that Dapr interacts with MySQL when it comes to state. 
 ```
-curl http://localhost:3510/v1.0/state/durable-statestore/name
+curl http://localhost:3501/v1.0/state/durable-statestore/name
 ```
 
 Just as a manager would like to ask the same questions of their personal assistant when it comes to remembering stuff, regardless of whether the PA writes things down on paper, memorizes them or uses a friend to retain the information, it is a fine thing for application developers to be able to use the same interaction with Dapr regardless of whether state is stored in MySQL, Redis Cache or any of the other types of state store that Dapr supports. In fact, an application developer does not need to know how and where the state will be stored and this can be changed at deployment time as the application administrator sees fit.

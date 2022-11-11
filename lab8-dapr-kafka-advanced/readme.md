@@ -38,7 +38,6 @@ To run the applications, we use the same instructions as before. Open two termin
 
 ```
 npm install
-alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6031
 export SERVER_PORT=6032
 export DAPR_HTTP_PORT=3631
@@ -48,7 +47,6 @@ dapr run --app-id name-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTT
 In the second terminal, run the *front-app* that will produce the messages to Kafka: 
 
 ```
-alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6030
 export DAPR_HTTP_PORT=3630
 dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 
@@ -75,7 +73,6 @@ Just by configuring a binding component for Kafka and running a Dapr sidecar (ev
 If you want to use curl to interact with MongoDB, Azure Blob Storage, Twitter, GCP Pub/Sub, Apple Push Notifications then that can easily be arranged. Configure the destination as a Dapr output binding component, run the Dapr sidecar and interact over local http from curl to the sidecar in order to have the sidecar do the actual interaction with the special component you want to target,
 
 ```
-alias dapr="/workspace/dapr/dapr"
 export DAPR_HTTP_PORT=6300
 dapr run --app-id dummy --dapr-http-port $DAPR_HTTP_PORT --components-path /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab8-dapr-kafka-advanced/hello-world-async-dapr/dapr-components
 ```
@@ -138,7 +135,6 @@ spec:
 
 Stop the Dapr sidecar you started before in this section and start it again with the same command as before:
 ```
-alias dapr="/workspace/dapr/dapr"
 export DAPR_HTTP_PORT=6300
 dapr run --app-id dummy --dapr-http-port $DAPR_HTTP_PORT --components-path /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab8-dapr-kafka-advanced/hello-world-async-dapr/dapr-components
 ```

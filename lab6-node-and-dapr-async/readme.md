@@ -11,7 +11,6 @@ Focus now on folder *hello-world-async-dapr*. It contains the app.js and front-a
 Open a terminal and switch to the directory:
 ```
 cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/simple-order-pubsub
-alias dapr="/workspace/dapr/dapr"
 npm install
 ```
 to have the required npm modules loaded to the *node-modules* directory.
@@ -40,7 +39,6 @@ This diagram visualizes the current situation:
 
 To publish a message to the *orders* topic in the default *pubsub* component, run this CLI command in new terminal window:
 ```
-alias dapr="/workspace/dapr/dapr"
 dapr publish --publish-app-id order-processor --pubsub pubsub --topic orders --data '{"orderId": "100"}' 
 ```
 This tells Dapr to publish a message on behalf of a imaginary application called *order-processor* (which is the application id of the only Dapr sidecar currently running) to the pubsub component called *pubsub* and a topic called *orders*. 
@@ -70,7 +68,6 @@ Run the producer application with the following statement, and check if the mess
 
 ```
 cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/simple-order-pubsub
-alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6001
 export DAPR_HTTP_PORT=3601
 dapr run --app-id orderprocessing --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node publisher.js 
@@ -137,7 +134,6 @@ Run the *frontapp* with these statements:
 ```
 cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/hello-world-async-dapr
 npm install 
-alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6030
 export DAPR_HTTP_PORT=3630
 dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node front-app.js 
@@ -158,7 +154,6 @@ So let's run this *name-processor* using these statements:
  
 ```
 cd /workspace/fontys-fall2022-microservices-messaging-kafka-dapr/lab6-node-and-dapr-async/hello-world-async-dapr
-alias dapr="/workspace/dapr/dapr"
 export APP_PORT=6031
 export SERVER_PORT=6032
 export DAPR_HTTP_PORT=3631
@@ -253,7 +248,7 @@ spec:
     value: "false"
 ```   
 
-Note: the name is the same as before (*pubsub*). The type is changed, from pubsub.redis to pubsub.kafka. And the metadata for this type is Kafka specific - and indicates the brokers in the Kafka-cluster.
+Note: the name is the same as before (*pubsub*). The type is changed, from pubsub.redis to pubsub.kafka. And the metadata for this type is Kafka specific - and indicates the brokers in the Kafka-cluster. Note: see [Dapr Docs](https://docs.dapr.io/reference/components-reference/supported-pubsub/setup-apache-kafka/) for all settings
 
 Our code - in `app.js` and `front-app.js` - does not need to know about this change in Pub/Sub provider. These modules communicate with the sidecars in generic pub/sub terms - without specific reference to Kafka or Redis. Before we can run the code, we need to make that the topic that the code expects to be dealing with - *names* - exists on the Kafka Cluster. 
 
@@ -294,5 +289,5 @@ When inspecting the traces, you will find two-level traces for greeter and neste
 [Dapr Docs - Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/)
 [Dapr Docs - State Management](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/)
 [Dapr Docs - Shared State between Applications](https://docs.dapr.io/developing-applications/building-blocks/state-management/state-management-overview/#shared-state-between-applications)
-
+[Dapr Docs - Pub/Sub with Kafka](https://docs.dapr.io/reference/components-reference/supported-pubsub/setup-apache-kafka/)
 

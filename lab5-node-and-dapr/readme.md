@@ -30,8 +30,6 @@ The application does one other thing of interest: it reads from the state store 
 Run the application using these commands; Dapr will know the application as *nodeapp*:
 
 ```
-alias dapr="/workspace/dapr/dapr"
-
 export DAPR_HTTP_PORT=3510
 export APP_PORT=3110
 dapr run --app-id nodeapp  --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node app.js
@@ -91,8 +89,6 @@ Start the *frontapp* in a terminal in the *hello-world-frontapp* directory using
 ```
 npm install --save @dapr/dapr
 npm install
-
-alias dapr="/workspace/dapr/dapr"
 
 export APP_PORT=3220
 export DAPR_HTTP_PORT=3620

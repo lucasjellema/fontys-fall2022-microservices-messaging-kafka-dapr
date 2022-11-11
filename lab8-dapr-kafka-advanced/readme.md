@@ -1,6 +1,6 @@
 # Dapr and Kafka - More Advanced Topics
 
-Kafka is supported in Dapr in two ways. One is as pubsub component to provide the implementation for the microservice to microservice pub/siub interaction pattern. That is what we have been using in the previous sections. However, when we want more control over the interaction with Apache Kafka - for example regarding partitions and consumer groups or security or observability - there is the second option: use Dapr bindings to interact with Kafka. Dapr Bindings come in two flavors: input bindings (that can trigger an application through the Dapr sidecar) and output bindings (where the application takes the initiative to start the interaction). Dapr ships with Kafka Bindings in both directions.
+Kafka is supported in Dapr in two ways. One is as pubsub component to provide the implementation for the microservice to microservice pub/siub interaction pattern. That is what we have been using in the previous sections. There is the second option: use Dapr *bindings* to interact with Kafka. Dapr Bindings come in two flavors: input bindings (that can trigger an application through the Dapr sidecar) and output bindings (where the application takes the initiative to start the interaction). Dapr ships with Kafka Bindings in both directions. Dapr also has bindings for many other technologies - some only through an Input Binding (that can trigger a Dapr Sidecar and its application), others only with an Output Binding (where the Sidare calls out on request from its application) and some - like Apache Kafka - with both Input and Output bindings.  
 
 Input Binding:
 ![](images/kafka-dapr-inputbinding.png)  
@@ -8,9 +8,9 @@ Input Binding:
 Output Binding:
 ![](images/dapr-kafka-outputbinding.png)  
 
-We will reimplement the Node applications interacting with Kafka from lab 6 - this time using the Kafka Bindings in Dapr to allow for more control and specialized configuration. The impact on the code in the applications is not huge - but there are some effects. 
+We will reimplement the Node applications interacting with Kafka from lab 6 - this time using the Kafka Bindings in Dapr to give you a feel for working with Bindings in Dapr. The impact on the code in the applications is not huge - but there are some changes. You will find a little bit later on that working with bindings in Dapr is a uniform experience across all bindings: whether you use an output binding to retrieve a file from AWS S3 or an outout binding to create a record in a MongoDB database - your code will be quite similar. 
 
-Next, we implement a more interesting asynchronous use case. And we will also briefly look at a special use case where we run a Dapr Sidecar on its own, just to get access to an assistant that any application or tool that speaks either HTTP or gRPC can use for outbound operations. 
+After switching from Kafka through Dapr PubSub to Kafka with Dapr Bindings , we implement a more interesting asynchronous use case. And we will also briefly look at a special use case where we run a Dapr Sidecar on its own, just to get access to an assistant that any application or tool that speaks either HTTP or gRPC can use for outbound operations. 
 
 ## Asynchronous Name Processing with Node and Dapr - This Time Through Bindings
 
@@ -164,7 +164,6 @@ Querying data can also be done with curl through Dapr sidecar:
 export DAPR_HTTP_PORT=6300
 curl -X POST -H 'Content-Type: application/json' http://localhost:$DAPR_HTTP_PORT/v1.0/bindings/durable-data-store -d '{ "metadata": { "sql": "select * from people"   }, "operation": "query" }'
 ```
-
 
 ## Resources
 

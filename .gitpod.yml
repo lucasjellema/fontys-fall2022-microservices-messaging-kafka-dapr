@@ -9,15 +9,15 @@ tasks:
       docker pull mysql:latest
       # run MySQL container instance - to experiment with MySQL as statestore instead of Redis
       docker run --name dapr-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:latest
-      alias dapr="/workspace/dapr/dapr"
   - name: Initialize Dapr
     command: |
       # initialize dapr - see https://docs.dapr.io/getting-started/install-dapr-selfhost/ 
       sleep 10s &&
       /workspace/dapr/dapr uninstall &&   # init fails if already done; however, after workspace restart, part of the initialization is lost - hence the uninstall / re-init
       /workspace/dapr/dapr init &&
+      /workspace/dapr/dapr --version
+      # add alias for dapr to .bashrc so every new terminal session has it set
       echo 'alias dapr="/workspace/dapr/dapr"' >> ~/.bashrc
-      dapr --version
   - command: |
       docker start dapr-mysql
       alias dapr="/workspace/dapr/dapr"
@@ -25,12 +25,6 @@ tasks:
       export PUBLIC_IP=127.0.0.1
       docker-compose up
       gp env KAFKAJS_NO_PARTITIONER_WARNING=1
-  - name: Open one more Bash terminal and Set Alias for Dapr CLI
-    command: |
-      alias dapr="/workspace/dapr/dapr"
-  - name: Open extra one more Bash terminal and Set Alias for Dapr CLI
-    command: |
-      alias dapr="/workspace/dapr/dapr"
 
 ports:
 

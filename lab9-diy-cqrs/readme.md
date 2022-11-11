@@ -291,7 +291,13 @@ curl  http://localhost:$APP_REST_PORT?connectionId=7733
 
 What happened when you restarted the CRM service is that it reloaded the *customer-database.csv* file and produced messages for each of the records. In this file, the mandate level for the connection identifier is 1. The readjustment to 2 was published to the Kafka Topic but not written to the CSV file. It did not become a persistent part of the state of the CRM service. The message on the Kafka Topic stating the mandate level at 1 - produced as the CRM service was restarting - has overridden the earlier message on the topic that declared the mandate level for 7733 to be 2. 
 
+### Bonus: Scakling Out by Running a Second IoT Platform Application
 
+Can you make this happen? Running two IoT Platform Application instances - that share the workload. Each processing about half of the messages published by the CRM microservice. Would it be hard to make this reality?
+
+Hint: consumer group. Hint 2: dapr-components/pubsub.yaml. 
+
+Give it a try!
 ### Bonus: Switching to MySQL and Restoring the Statestore
 
 When something happens with the Redis container that implements the statestore for the IoT Platform microservice, then all connection mandate data is lost. Or when we switch to MySQL as the provider of the statestore. However, all messages that were used to create the data in that store are still available in the Kafka Topic. The statestore can be restored!

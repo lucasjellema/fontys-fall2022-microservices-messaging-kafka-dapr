@@ -14,3 +14,14 @@ spec:
     value: ""
   - name: actorStateStore
     value: "true"
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: durable-statestore
+spec:
+  type: state.mysql
+  version: v1
+  metadata:
+  - name: connectionString
+    value: "root:my-secret-pw@tcp(localhost:3306)/?allowNativePasswords=true"    

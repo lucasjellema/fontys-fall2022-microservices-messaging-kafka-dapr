@@ -1,8 +1,8 @@
-const neatCsv = require('neat-csv'); // NPM module for easy CSV file handling
-const fs = require('fs')
+import neatCsv  from 'neat-csv'; // NPM module for easy CSV file handling
+import * as fs from 'fs'
 
 // I made use of this article for creating this module: https://flaviocopes.com/node-read-csv/ 
-const importCustomers = function (addCustomerFunction) {
+export const importCustomers = function (addCustomerFunction) {
     // read customers from CSV file and feed the file contents as data into the processing function 
     fs.readFile('./customer-database.csv', async (err, data) => {
         if (err) {
@@ -16,5 +16,3 @@ const importCustomers = function (addCustomerFunction) {
         customers.forEach(addCustomerFunction)
     })
 }
-
-module.exports = { importCustomers };

@@ -1,10 +1,41 @@
-const http = require('http')
-const url = require('url')
-const consumer = require('./consume')
+import { DaprClient, DaprServer, LogLevel, CommunicationProtocolEnum } from '@dapr/dapr';
+import * as http from 'http';
+import * as url from 'url';
 
-const PORT = 3006
+const PUBSUB_NAME = "iot-platform-pubsub";
+const TOPIC_NAME  = "names"
+
+const daprHost = "127.0.0.1"; 
+const daprPort = process.env.DAPR_HTTP_PORT ;
+
+const serverHost = "127.0.0.1";
+const serverPort = process.env.APP_PORT ; 
+
+const PORT = process.env.APP_PORT || "3006"
 
 const connectionMandates = {}
+
+async function start() {
+    const daprserver = new DaprServer(
+        serverHost, 
+        4700, 
+        daprHost, 
+        daprPort, 
+        CommunicationProtocolEnum.HTTP, { logger: { level: LogLevel.Verbose }}
+    );
+    //Subscribe to a topic
+    console.log(`subscribing to topic ${TOPIC_NAME} via Dapr`)
+    await daprserver.pubsub.subscribe(PUBSUB_NAME, TOPIC_NAME, async (message) => { // function to be invoked whenever a message is received from the sidecar
+        console.log(`Subscriber received: ${message} from topic`)
+    });
+    await daprserver.start();
+}
+
+start().catch((e) => {
+    console.error(e);
+    process.exit(1);
+});
+
 const handleConnectionMandateMessage = function(message) {
     console.log(`Handling ConnectionMandate Message ${message.value.toString()} ` )
     let connectionMandate = JSON.parse(message.value.toString())
@@ -38,7 +69,8 @@ const server = http.createServer((req, res) => {
     }
 })
 server.listen(PORT);
-consumer.setMessageHandler(handleConnectionMandateMessage)
-consumer.initializeConsumer();
+// consumer.setMessageHandler(handleConnectionMandateMessage)
+// consumer.initializeConsumer();
+
 console.log(`HTTP Server is listening at port ${PORT} for HTTP GET requests`)
 

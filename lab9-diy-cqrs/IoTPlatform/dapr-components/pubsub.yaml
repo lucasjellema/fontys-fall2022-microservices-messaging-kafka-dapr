@@ -1,0 +1,19 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: iot-platform-pubsub
+  namespace: default
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers # Required. Kafka broker connection setting
+    value: "localhost:29092,localhost:29093,localhost:29094"
+  - name: authType # Required.
+    value: "none"
+  - name: authRequired
+    value: "false"
+  - name: consumerGroup # Optional. Used for input bindings.
+    value: "iot-platform-consumer"
+  - name: initialOffset
+    value: "oldest"  # provide all messages, including the ones published in the past

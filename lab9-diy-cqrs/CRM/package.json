@@ -7,10 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js"
   },
-  "author": "",
-  "license": "ISC",
+  "type": "module",
   "dependencies": {
-    "neat-csv": "^5.2.0",
-    "node-rdkafka": "^2.10.1"
+    "@dapr/dapr": "^2.5.0",
+    "node-fetch": "2.0",
+    "neat-csv": "^5.2.0"
   }
 }

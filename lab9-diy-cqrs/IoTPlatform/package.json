@@ -9,7 +9,8 @@
   },
   "author": "",
   "license": "ISC",
+  "type": "module",
   "dependencies": {
-    "node-rdkafka": "^2.10.1"
+    "@dapr/dapr": "^2.5.0"
   }
 }

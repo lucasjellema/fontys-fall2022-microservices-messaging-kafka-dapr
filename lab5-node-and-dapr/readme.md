@@ -16,6 +16,21 @@ npm install
 ```
 which reads the dependencies in package-lock.json or package.json and downloads and installs all direct (and indirect) dependencies.
 
+File *get-set-get-delete-get.js* gives you a rapid introduction to interaction with Dapr from Node. This program creates a DaprClient - a JavaScript object to interact with the Dapr side car. Then it has the side car look up a piece of state from the statestore, save a new value for the state, retrieve it again and finally remove it altogether.
+
+See this in action by running this next piece of code in a terminal:
+
+```
+export DAPR_HTTP_PORT=3590
+export APP_PORT=3120
+dapr run --app-id dummy --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT node get-set-get-delete-get.js
+```
+
+The result will look like this:
+![](images/output-getsetgetdelete.png)  
+
+Let's now turn our attention to something a little more serious: a Node application that accepts HTTP requests and also interacts through Dapr with a statestore.
+
 Open file *app.js* in the editor. It contains a small application that handles HTTP requests: it stores the name passed in the request and stores it as state (in a Dapr state store called *statestore*). It keeps track of the number of occurrences of each name and reports in the HTTP response how many times a name has been mentioned.
 
 The Node application is started through Dapr (using `dapr run --app-id nodeapp node app.js`) and in that way gets its own Dapr sidecar that handles the state related activities. The Node application uses the Node SDK to communicate with the Sidecar - instead of and much more convenient and elegant than explicit HTTP or gRPC interactions.  

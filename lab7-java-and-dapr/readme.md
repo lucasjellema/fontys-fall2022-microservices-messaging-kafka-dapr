@@ -39,9 +39,14 @@ The Dapr Sidecar will start as well as the SpringBoot Java application. It - the
 INFO[0003] app is subscribed to the following topics: [names] through pubsub=pubsub  app_id=name-processor instance=lucasjellem-fontysfall2-yxeo50udxjb scope=dapr.runtime type=log ver=1.9.3
 ```
 
+Note: when you see errors in the logs that refer to messages that cannot be processed, there may be messages consumed by the application that do not have a proper JSON format. If that happens, you can best stop the application, empty the topic through AKHQ and restart the application. 
+
+![](images/empty-topic-names.png)  
+
 You can publish a message to the *names* topic through AKHQ:
 ![](images/produce-to-topic1.png)  
-Press the button Produce to Topic on the details page for the Topic *names*. Then on the page *Produce to names*, the name of the topic should be *names* and the value for the message must be a JSON message with a property *data* that contains the actual payload - in this case the name: `{data : "THE NAME"}.
+
+Press the button Produce to Topic on the details page for the Topic *names*. Then on the page *Produce to names*, the name of the topic should be *names* and the value for the message must be a JSON message with a property *data* that contains the actual payload - in this case the name: `{data : "THE NAME"}`.
 
 ![](images/produce-to-topic2.png)  
 
@@ -58,12 +63,15 @@ exit
 
 Or publish the message through Dapr with the following command:
 
-
+```
+dapr publish --publish-app-id name-processor --pubsub pubsub --topic names --data 'COMMAND LINE ELISABETH'
+```
 
 We can also use a slightly modified of the greeter application - the Node front-app.js application that we already used in the previous section. The modification is required because the Java Dapr library expects - nay, demands - a JSON payload in the message including at least the property *data* that contains the data to be considered as the actual message payload. 
 
 Note that we will now publish from a Node program through Dapr to Kafka and consume through Kafka to a Java application. This application is in directory *greeter-app*. To start it, open a terminal in this directory and run:
 ```
+npm install
 export APP_PORT=6030
 export DAPR_HTTP_PORT=3630
 dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 

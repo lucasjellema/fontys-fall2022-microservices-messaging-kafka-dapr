@@ -22,7 +22,7 @@ you can check on the containers that are running.
 With 
 
 ```
-dapr -version
+dapr version
 ```
 
 you can check the currently installed versions of the CLI and the Dapr Runtime.
@@ -139,7 +139,7 @@ INFO[0000] Creating MySql schema 'dapr_state_store'      app_id=myotherapp insta
 INFO[0000] Creating MySql state table 'state'            app_id=myotherapp instance=DESKTOP-NIQR4P9 scope=dapr.contrib type=log ver=edge
 INFO[0000] component loaded. name: durable-statestore, type: state.mysql/v1  app_id=myotherapp instance=DESKTOP-NIQR4P9 scope=dapr.runtime type=log ver=edge
 ```
-
+talk to all teams: which data, what level of synchronization required with POS/RAS/…, anonymization of data, multiple stores in test environment? How did KAS do this?
 This confirms that Dapr initialized communications with the MySQL instance, it also created the default schema and default table in it for storing state.
 
 Let us now create some state, in exactly the same way as we created state before - when it was saved in Redis Cache.

@@ -127,7 +127,7 @@ curl localhost:3510/v1.0/invoke/frontapp/method/greet?name=Klaas
 
 You should see the name occurrence increase with each call.
 
-Now kill *nodeapp*.
+Now stop the *nodeapp* - using `CTRL+C` (or the Mac equivalent) in the terminal running *nodeapp*.
 
 Try:
 ```

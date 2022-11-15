@@ -228,7 +228,7 @@ At this point, the front-app should get the increased occurrence count from the 
 
 And now at last we get back to Apache Kafka. In the previous section we have done asynchronous microservice interaction using Dapr pubsub - powered by Redis as the message backbone. However, we want Apache Kafka to be our underlying message infrastructure. And we already have the three-broker-cluster running (which you can verify through `docker ps` or by inspecting the AKHQ UI in the brower for port `28042`.
 
-Replace the contents of file `pubsub.yaml` with the following, in order to have pub/sub component *pubsub* provided by Apache Kafka instead of Redis:
+Replace the contents of file `pubsub.yaml` (in directory *lab6-node-and-dapr-async/hello-world-async-dapr/dapr-components*) with the following, in order to have pub/sub component *pubsub* provided by Apache Kafka instead of Redis:
 
 ```
 apiVersion: dapr.io/v1alpha1
@@ -259,13 +259,38 @@ kafka-topics --create --if-not-exists --zookeeper zookeeper-1:2181 --topic names
 exit
 ```
 
-Stop the two applications - greeter and name-processor - and the start them again. This time - because of the change pubsub.yaml file - they will hook up with Apache Kafka.
+Stop the two applications - greeter and name-processor - and the start them again. This time - because of the changed pubsub.yaml file - they - or rather their sidecars - will hook up with Apache Kafka.
+
+In one terminal, start the *greeter* application:
+```
+export APP_PORT=6030
+export DAPR_HTTP_PORT=3630
+dapr run --app-id greeter --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components  node front-app.js 
+```
+and in a second terminal run *name-processor*:
+```
+export APP_PORT=6031
+export SERVER_PORT=6032
+export DAPR_HTTP_PORT=3631
+dapr run --app-id name-processor --app-port $APP_PORT --dapr-http-port $DAPR_HTTP_PORT --components-path dapr-components node app.js 
+```
 
 This image shows the current set up. Two independent applications with their sidecars - both interacting with Apache Kafka. In both cases, our custom code only has a dependency on Dapr - not on Redis or Kafka. 
 
 ![](images/pubsub-through-kafka.png)  
 
-Invoke the greeter application a few times. This will result in responses - and in some messages on the new Kafka Topic *names*. You can inspect the contents of the topic in AKHQ in the browser. The next image demonstrates what this looks like - and what the message contents is. Note data used for constructing the trace information published to Zipkin.
+Invoke the greeter application a few times. 
+
+Again, make a number of calls that will be handled by the front-app:
+```
+curl localhost:6030?name=Mary
+curl localhost:6030?name=Michael
+curl localhost:6030?name=Michael
+curl localhost:6030?name=Mary
+curl localhost:6030?name=Jonathan
+```
+
+This will result in responses - and in some messages on the new Kafka Topic *names*. You can inspect the contents of the topic in AKHQ in the browser. The next image demonstrates what this looks like - and what the message contents is. Note data used for constructing the trace information published to Zipkin.
 
 ![](images/dapr-event-on-kafka-topic.png)  
 

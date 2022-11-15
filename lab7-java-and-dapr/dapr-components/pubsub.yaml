@@ -13,3 +13,5 @@ spec:
     value: "none"
   - name: authRequired
     value: "false"
+  - name: initialOffset # Optional.
+    value: newest

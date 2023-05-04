@@ -16,7 +16,7 @@ In the previous lab, you have produced and consumed messages manually, using Kaf
 
 The NPM module repository returns over 660 modules when searched for the keyword *kafka*. Not all of them are libraries to facilitate the interaction from your Node application with Apache Kafka clusters - but over a dozen are. In this lab, we will work with the *node-rdkafka* NPM module, [node-rdkafka on GitHub](https://github.com/Blizzard/node-rdkafka) for details on this particular library and [Reference Docs](https://blizzard.github.io/node-rdkafka/current/) for the API specification. The node-rdkafka library is a high-performance NodeJS client for Apache Kafka that wraps the native (C based) *librdkafka* library. All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.
 
-The sources for this part of the lab are in the directory *node-kafka-client* in the *lab3-node-and-kafka* directory.
+The sources for this part of the lab are in the directory *node-client* in the *lab3-node-and-kafka* directory.
 
 ### Producing to test-topic in Node
 
@@ -26,7 +26,7 @@ Take a look at the *package.json* file. You will see a dependency configured on 
     "kafkajs": "^2.2.0"
   }
 ```
-Now look at the file *produce.js*. The first line of this Node application also refers to *kafkajs*. When we execute *produce.js*, the Node runtime will try to load the module *kafkajs*. It will try to do so by locating a directory called *kafkajs* under the directory *node-modules* that lives in the root of the application. At this moment, you probably do not yet have this *node-modules* directory. It gets created when you instruct *npm* to download all libraries on which the application depends - as configured in *package.json*.
+Now look at the file *producer.js*. The first line of this Node application also refers to *kafkajs*. When we execute *producer.js*, the Node runtime will try to load the module *kafkajs*. It will try to do so by locating a directory called *kafkajs* under the directory *node-modules* that lives in the root of the application. At this moment, you probably do not yet have this *node-modules* directory. It gets created when you instruct *npm* to download all libraries on which the application depends - as configured in *package.json*.
 
 Kafkajs is an easy to use, modern Node client for Apache Kafka. See: [https://kafka.js.org/](https://kafka.js.org/) for more details on this Kafka client library for Node.
 
@@ -39,7 +39,7 @@ npm install
 
 This instructs *npm* to download and install in directory *node-modules* all modules that are required directly or indirectly by the application - as defined in the *dependencies* property in *package.json*.
 
-This is as good a time as any to open file *produce.js* again and interpret what it does.
+This is as good a time as any to open file *producer.js* again and interpret what it does.
 
 * instantiate the KafkaJS client by pointing it towards the brokers in the Kafka clusters; the IP addresses are configured in the docker-compose.yml file
 * create a producer through the KafkaJS client
@@ -80,9 +80,10 @@ node consumer.js
 This should print all messages on the *test-topic* to the console. You should see something similar to the following output - with different timestamps obviously - reporting on the consumption of a message that was first produced from *producer.js*:
 
 ```
-{"level":"INFO","timestamp":"2022-09-29T04:41:39.772Z","logger":"kafkajs","message":"[Consumer] Starting","groupId":"test-group"}
-{"level":"INFO","timestamp":"2022-09-29T04:41:39.903Z","logger":"kafkajs","message":"[ConsumerGroup] Consumer has joined the group","groupId":"test-group","memberId":"my-app-fdaed509-2252-4513-8563-377960170ced","leaderId":"my-app-fdaed509-2252-4513-8563-377960170ced","isLeader":true,"memberAssignment":{"test-topic":[0,1]},"groupProtocol":"RoundRobinAssigner","duration":129}
-{ value: 'Here I am telling you a story' }
+{"level":"INFO","timestamp":"2023-05-04T17:38:22.824Z","logger":"kafkajs","message":"[Consumer] Starting","groupId":"test-group"}
+{"level":"INFO","timestamp":"2023-05-04T17:38:22.983Z","logger":"kafkajs","message":"[ConsumerGroup] Consumer has joined the group","groupId":"test-group","memberId":"my-app-609f41cd-667c-4152-ba5c-9b27714e12b6","leaderId":"my-app-609f41cd-667c-4152-ba5c-9b27714e12b6","isLeader":true,"memberAssignment":{"test-topic":[0]},"groupProtocol":"RoundRobinAssigner","duration":157}
+- test-topic[0 | 0] / 1683221729876 2#Here I am telling you a story
+- test-topic[0 | 1] / 1683221764984 2#Here I am telling you a story
 ```
 
 You can stop the application with <kbd>Ctrl</kbd> + <kbd>C</kbd>.
@@ -131,7 +132,7 @@ We can also do something similar on the consuming end: publish a web application
 ### Node Web Application for Producing Messages
 Earlier in this lab we looked at a very simple Node web application: *hello-world-web*. Now we combine that web application with the Kafka Producer we worked on just before. Look in directory *node-kafka-web-client* and open file *web-producer.js*.
 
-This Node application starts an HTTP Server to handle GET requests. It uses a query parameter called *message* for the content of the message to publish to the Kafka Topic. A module referenced as *./produce* is *required* into the *web-producer.js*. This is interpreted by the Node runtime as: find a local file *produce.js*, load it and make available as public objects anything in *module.exports*. The file *produce.js* is largely the same as before, only this time it does not automatically start generating and publishing messages and it has a function called *produceMessage* that produces one message to the `topic`. This function is exported in *module.exports* and as such available in *web-producer.js*. 
+This Node application starts an HTTP Server to handle GET requests. It uses a query parameter called *message* for the content of the message to publish to the Kafka Topic. A module referenced as *./produce* is *required* into the *web-producer.js*. This is interpreted by the Node runtime as: find a local file *producer.js*, load it and make available as public objects anything in *module.exports*. The file *producer.js* is largely the same as before, only this time it does not automatically start generating and publishing messages and it has a function called *produceMessage* that produces one message to the `topic`. This function is exported in *module.exports* and as such available in *web-producer.js*. 
 
 Before you can run the application, you need to bring in the dependencies. To quickly open a terminal window in the right directory, open the content menu for the *web-producer.js* file and choose option *Open in Integrated Terminal*. A terminal window opens and navigates to the correct directory.
 ![](images/open-integrated-terminal.png)  
